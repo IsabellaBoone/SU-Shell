@@ -1,0 +1,1 @@
+I guess this is where we could put all our code. To be honest I can't rememeber if this is easier or not (to have everything in one folder)
