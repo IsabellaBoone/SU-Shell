@@ -29,17 +29,35 @@ struct argument {
 
 
 /**
+ * Receives a linked list of our list_head struct.
+ * The function will traverse through our linked list and
+ * free it from memory after deleting each node entry.
+ */
+void clear_list(struct list_head *list)
+{
+    struct argument *entry;    //Current entry  during traversal
+
+    while (! list_empty(list)) {
+        entry = list_entry(list->next, struct argument, list);
+        list_del(&entry->list);
+        free(entry);
+    }
+
+}
+
+
+/**
  * Recurses through a given list_head struct's list,
  * and prints the contents to the console.
  */
-void displayList(struct list_head todo_list){
-    struct list_head *start=todo_list.next; //Start at the first node after the head
+void displayList(struct list_head *todo_list){
+    struct list_head *start=todo_list->next; //Start at the first node after the head
     struct list_head *curr; //Tracks current node during traversal
     struct argument *entry; //Current nodes struct with contents
 
     
 
-    for (curr = todo_list.next; curr->next != start; curr = curr->next) {
+    for (curr = todo_list->next; curr->next != start; curr = curr->next) {
         entry = list_entry(curr, struct argument, list);
         printf("%s\n", entry->contents);
     }
@@ -51,7 +69,7 @@ void displayList(struct list_head todo_list){
  * Take in the input string and length of the string as parameters.
  * Returns the amount of sentences in the input string
 **/
-void stringExtract(struct list_head list_args, char *input, int length){
+void stringExtract(struct list_head *list_args, char *input, int length){
     int word_count = 0;
     int currentState = CHARACTER;
 
@@ -59,13 +77,13 @@ void stringExtract(struct list_head list_args, char *input, int length){
     struct argument *arg;
 
     int tempLocation = 0;
-
+        
     for(int i=0; i<length; i++){
 
         //if we find characters to a word, add them to a temp variable
         if (input[i] != ' ' && input[i] != '"'){
             currentState = CHARACTER;
-            temp[tempLocation] = input[i];
+            strncat(temp, &input[i], 1);
             tempLocation++;
 
             //if we found the last word, and it has no space after
@@ -73,18 +91,16 @@ void stringExtract(struct list_head list_args, char *input, int length){
             if(i == length-1){
                 arg = malloc(sizeof(struct argument));
                 arg->contents = strdup(temp);
-                list_add(&arg->list, &list_args);
+                list_add(&arg->list, list_args);
                 memset(temp, 0, 50);
             }
 
         }else if (input[i] == ' ' || input[i] == '\t'){
             if(currentState!=WHITESPACE){
                 currentState = WHITESPACE; 
-                
-                arg = malloc(sizeof(struct argument)); //allocate arg struct
+                arg = malloc(sizeof(struct argument));
                 arg->contents = strdup(temp); //store the last full word into contents of an argument
-                list_add(&arg->list, &list_args); //add the argument to the list of args
-               
+                list_add(&arg->list, list_args); //add the argument to the list of args
                 word_count++;   //increment which word we are on
                 tempLocation=0; //reset character count for a word
                 memset(temp, 0, 50);    //reset the temp word variable to blank
@@ -96,9 +112,8 @@ void stringExtract(struct list_head list_args, char *input, int length){
     //The req specify ending the list of arguements with a NULL for exec
     arg = malloc(sizeof(struct argument));
     arg->contents = strdup("NULL");
-    list_add(&arg->list, &list_args);
+    list_add(&arg->list, list_args);
 
-    displayList(list_args);
     
 }
 
@@ -107,10 +122,11 @@ void stringExtract(struct list_head list_args, char *input, int length){
 int main(int argc, char **argv) {
 
     LIST_HEAD(list_args);
-
+    
     if(argc>0){
-        stringExtract(list_args, argv[1], strlen(argv[1]));
-        //displayList(list_args);
+        stringExtract(&list_args, argv[1], strlen(argv[1]));
+        displayList(&list_args);
     }
+
 
 }
