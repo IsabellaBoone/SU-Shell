@@ -10,15 +10,6 @@ enum State {
     WHITESPACE, CHARACTER, QUOTE
 }; 
 
-
-//Basic sentence struct to hold our sentence counts and pointer array
-struct sentence_struct
-{
-    int sentence_count;
-    char **sentence_array;
-};
-
-
 /**
  * Main struct for the linked list.
  * Contains the type of user input(list or dashed), the contents  (the input),
@@ -42,6 +33,7 @@ void clear_list(struct list_head *list)
     while (! list_empty(list)) {
         entry = list_entry(list->next, struct argument, list);
         list_del(&entry->list);
+        free(entry->contents);
         free(entry);
     }
 
@@ -131,6 +123,7 @@ void stringExtract(struct list_head *list_args, char *input, int length){
     arg->contents = strdup("NULL");
     list_add(&arg->list, list_args);
 
+    free(temp); 
     
 }
 
@@ -148,6 +141,8 @@ int main(int argc, char **argv) {
         stringExtract(&list_args, input, strlen(input));
         displayList(&list_args);
     }
+
+    clear_list(&list_args); 
 
 
 }
