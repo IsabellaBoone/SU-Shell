@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "list.h"
+
 #define TEMP_INPUT_BUFFER 512  
 #define INPUT_LENGTH 4094
 
@@ -74,31 +75,29 @@ void stringExtract(struct list_head *list_args, char *input, int length){
     int word_count = 0;
     int currentState = CHARACTER;
 
-    char *temp = calloc(50, sizeof(char));  //temporary word variable
-    struct argument *arg;
+    char *temp = calloc(50, sizeof(char));  // Temporary word variable
+    struct argument *arg; // Linked List
 
     int tempLocation = 0;
         
     for(int i=0; i<length; i++){
 
-        //if we find characters to a word, add them to a temp variable
-        if (input[i] != ' ' && input[i] != '\n' && input[i] != '\t'){
-            currentState = CHARACTER;
+        // If we find characters to a word, add them to a temp variable
+        if ((input[i] != ' ' && input[i] != '\n' && input[i] != '\t') && (input[i] != '"')) {
+            currentState = CHARACTER; // Set current state
 
-            strncat(temp, &input[i], 1);
+            strncat(temp, &input[i], 1); // Copy character to temp word variable
 
             //if we found the last word, and it has no space after
             //add to the list
             if(i == length-2){
-                printf("running\n");
                 arg = malloc(sizeof(struct argument));
                 arg->contents = strdup(temp);
                 list_add(&arg->list, list_args);
                 memset(temp, 0, 50);
             }
-            printf("i %d, length %d\n", i, length);
     
-        }else if (input[i] == ' ' || input[i] == '\t'){
+        } else if (input[i] == ' ' || input[i] == '\t'){
             if(currentState!=WHITESPACE){
                 currentState = WHITESPACE; 
                 arg = malloc(sizeof(struct argument));
@@ -107,7 +106,7 @@ void stringExtract(struct list_head *list_args, char *input, int length){
                 word_count++;   //increment which word we are on
                 memset(temp, 0, 50);    //reset the temp word variable to blank
             }
-        
+
         } else if (input[i] == '"') {
             if (currentState != QUOTE) {  //starting quote
                 currentState = QUOTE; 
@@ -121,8 +120,7 @@ void stringExtract(struct list_head *list_args, char *input, int length){
                 arg->contents = strdup(temp); //store the last full word into contents of an argument
                 list_add(&arg->list, list_args); //add the argument to the list of args
                 memset(temp, 0, 50);    //reset the temp word variable to blank
-            } else { //ending quote
-                currentState = WHITESPACE; 
+                currentState = WHITESPACE;
             }
 
         }
