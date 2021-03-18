@@ -3,9 +3,10 @@
 #include <string.h>
 #include "list.h"
 #define TEMP_INPUT_BUFFER 512  
+#define INPUT_LENGTH 4094
 
 enum State {
-    WHITESPACE, CHARACTER 
+    WHITESPACE, CHARACTER, QUOTE
 }; 
 
 
@@ -81,20 +82,22 @@ void stringExtract(struct list_head *list_args, char *input, int length){
     for(int i=0; i<length; i++){
 
         //if we find characters to a word, add them to a temp variable
-        if (input[i] != ' ' && input[i] != '"'){
+        if (input[i] != ' ' && input[i] != '\n' && input[i] != '\t'){
             currentState = CHARACTER;
+
             strncat(temp, &input[i], 1);
-            tempLocation++;
 
             //if we found the last word, and it has no space after
             //add to the list
-            if(i == length-1){
+            if(i == length-2){
+                printf("running\n");
                 arg = malloc(sizeof(struct argument));
                 arg->contents = strdup(temp);
                 list_add(&arg->list, list_args);
                 memset(temp, 0, 50);
             }
-
+            printf("i %d, length %d\n", i, length);
+    
         }else if (input[i] == ' ' || input[i] == '\t'){
             if(currentState!=WHITESPACE){
                 currentState = WHITESPACE; 
@@ -102,10 +105,26 @@ void stringExtract(struct list_head *list_args, char *input, int length){
                 arg->contents = strdup(temp); //store the last full word into contents of an argument
                 list_add(&arg->list, list_args); //add the argument to the list of args
                 word_count++;   //increment which word we are on
-                tempLocation=0; //reset character count for a word
                 memset(temp, 0, 50);    //reset the temp word variable to blank
             }
         
+        } else if (input[i] == '"') {
+            if (currentState != QUOTE) {  //starting quote
+                currentState = QUOTE; 
+                i++; 
+                while (input[i] != '"') {
+                    //printf("%c\n", input[i]); 
+                    strncat(temp, &input[i], 1);
+                    i++;
+                }
+                arg = malloc(sizeof(struct argument));
+                arg->contents = strdup(temp); //store the last full word into contents of an argument
+                list_add(&arg->list, list_args); //add the argument to the list of args
+                memset(temp, 0, 50);    //reset the temp word variable to blank
+            } else { //ending quote
+                currentState = WHITESPACE; 
+            }
+
         }
     }
 
@@ -122,9 +141,13 @@ void stringExtract(struct list_head *list_args, char *input, int length){
 int main(int argc, char **argv) {
 
     LIST_HEAD(list_args);
-    
+    char input[INPUT_LENGTH]; 
+
+    fgets(input, INPUT_LENGTH, stdin); 
+    //input[strlen(input) - 1] = '\0'; 
+
     if(argc>0){
-        stringExtract(&list_args, argv[1], strlen(argv[1]));
+        stringExtract(&list_args, input, strlen(input));
         displayList(&list_args);
     }
 
