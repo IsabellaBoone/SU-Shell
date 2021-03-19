@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+//May need to remove when we remove the executor stuff 
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "list.h"
 
 #define TEMP_INPUT_BUFFER 512  
@@ -127,20 +133,115 @@ void stringExtract(struct list_head *list_args, char *input, int length){
     
 }
 
+/**
+ * @brief Get the length of the list 
+ * 
+ * @param list 
+ * @return int 
+ */
+int getListLength(struct list_head *list) {
+    int count = 0; 
+    struct list_head *curr;
+    
+    for (curr = list->next; curr != list; curr = curr->next) {
+        count++; 
+    } 
+    return count;
+}
+
+/**
+ * @brief makes a list of arguments
+ * 
+ * @param 
+ * @param list The list that will be turned into an array of characetr pointers 
+ * @return char* Returns a list of arguments in the char **args
+ */
+void makeArgumentList(struct list_head *list, char **args, int len) {
+    struct list_head *curr;  
+    struct argument *entry; 
+    int i = len - 1; 
+    
+    for (curr = list->next; curr != list; curr = curr->next) {
+        entry = list_entry(curr, struct argument, list); 
+        args[i] = strdup(entry->contents); 
+        i--; 
+    }
+    
+    //need to manually set the last argument to NULL, even though it is in linked list
+    //may want to just not add null on the linked list 
+    args[len - 1] = NULL; 
+    //the exec args list should look something like 
+    //args = {"element1", "element2", NULL}; 
+}
+
+void free_exec_arg_list(char **args, int len) {
+    int i; 
+    for (i = 0; i < len; i++) {
+        free(args[i]); 
+    }
+    free(args); 
+
+}
+
+/*****************************************************************************
+ * I just decided to put the executor functions in the basic_parser so it'd 
+ * be easier to test with the basic parser.
+ * basic_executor.c 
+ * **************************************************************************/
+void handleChildInExecutor(char *command, char *const *args) {
+    execvp(command, args); 
+    perror("The process failed to execute"); //Should we handle an error here if we are unable to 
+    exit(-1); 
+}
+
+void handleParentInExecutor(pid_t pid, int option) {
+    int status; 
+    waitpid(pid, &status, option); 
+}
+
+void executor(char *command, char *const *args) {
+    pid_t pid = fork(); 
+
+    if (pid == 0) { //Child process 
+        handleChildInExecutor(command, args); 
+    } else {  //Parent process 
+        handleParentInExecutor(pid, 0); 
+    }
+}
 
 
 int main(int argc, char **argv) {
-
-    LIST_HEAD(list_args);
+    LIST_HEAD(list_args); 
     char input[INPUT_LENGTH]; 
 
     fgets(input, INPUT_LENGTH, stdin); 
-    //input[strlen(input) - 1] = '\0'; 
 
     if(argc>0){
         stringExtract(&list_args, input, strlen(input));
-        displayList(&list_args);
+        //displayList(&list_args);
     }
+
+    //finds the length of the list, used to allocate space for the array of character pointers 
+    int list_len; 
+    char *command; 
+    list_len = getListLength(&list_args); 
+
+    //initializes an array of character pointers that will be passed to exec()
+    char **exec_arg_list = malloc(list_len * sizeof(char *)); 
+
+    //takes the linked list, and turns it into an array list that can be passed to exec
+    makeArgumentList(&list_args, exec_arg_list, list_len); 
+    command = malloc((5 + strlen(exec_arg_list[0])) * sizeof(char));
+
+    // command becomes: /bin/<command> 
+    strcpy(command, "/bin/"); 
+    strcat(command, exec_arg_list[0]); 
+
+    //executes a basic command
+    executor(command, exec_arg_list); 
+
+    //frees the argument list
+    free_exec_arg_list(exec_arg_list, list_len); 
 
     clear_list(&list_args); 
 
