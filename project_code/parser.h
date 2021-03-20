@@ -4,20 +4,81 @@
 #include <stdlib.h> // for malloc/free
 #include "list.h"
 
+enum State {
+    WHITESPACE, CHARACTER, QUOTE
+}; 
+
 
 /**
- * Struct used to keep track of numbers and sentences
- * and the sentences themselves.
+ * Main struct for the linked list.
+ * Contains the type of user input(list or dashed), the contents  (the input),
+ * and the recursive list.
  */
-struct arg {
-  char* contents; // ls, -a, -l
-  struct list_head list; // 
+struct argument {
+    char *contents;
+    struct list_head list;
 };
 
-void parse(char *argv); 
 
-char** separate_args(char *buffer);
+struct {
+  int num;
+  char **sentences;
+} sentence_info;
 
-void print_traverse(struct list_head *node);
 
+//Finds the number of sentences in the input string and returns that value. 
+int find_num_sentences(char input[], int len);
+
+//Copies an individual sub-command to a pointer 
+void copy_sentence(char **sentences, char *sentence, int i);
+
+
+//Copies all the sentences from input into the array of pointers 
+void copy_sentences(char input[], int num, char **sentences);
+
+
+//Prints the number of sentences in input 
+void print_num_sentences(int num);
+
+
+//Prints the sentences in the correct format 
+void print_sentences(int num, char **sen);
+
+
+/**
+ * Receives a linked list of our list_head struct.
+ * The function will traverse through our linked list and
+ * free it from memory after deleting each node entry.
+ */
 void clear_list(struct list_head *list);
+
+
+/**
+ * Recurses through a given list_head struct's list,
+ * and prints the contents to the console.
+ */
+void displayList(struct list_head *todo_list);
+
+
+/**
+ * Take in the input string and length of the string as parameters.
+ * Returns the amount of sentences in the input string
+**/
+void stringExtract(struct list_head *list_args, char *input, int length);
+
+/**
+ * @brief Get the length of the list 
+ * 
+ * @param list 
+ * @return int 
+ */
+int getListLength(struct list_head *list);
+
+/**
+ * @brief makes a list of arguments
+ * 
+ * @param 
+ * @param list The list that will be turned into an array of characetr pointers 
+ * @return char* Returns a list of arguments in the char **args
+ */
+void makeArgumentList(struct list_head *list, char **args, int len);

@@ -1,7 +1,7 @@
-# Bad makefile
+all: sush
 
-all: sush 
-clean: 
-	rm -f *.o sush 
-sush: 
-	gcc -o sush sush.c 
+sush: *.c *.h
+	gcc -o sush *.c -lm
+
+clean:
+	rm sush

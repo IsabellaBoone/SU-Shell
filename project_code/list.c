@@ -1,39 +1,71 @@
 #include "list.h"
 
-//adds the "new" item to the list at the front. The "new" list becomes the head of the list. 
-//@new: new entry to be added 
-//@head: list head to add it after
-void list_add(struct list_head *new, struct list_head *head) {
-    struct list_head *prev = head; 
-    struct list_head *next = head->next; 
-    next->prev = new; 
-    new->next = next; 
-    new->prev = prev; 
-    prev->next = new; 
+void list_add(struct list_head *new, struct list_head *head){
+    struct list_head *next = head->next;
+
+    next->prev = new;
+    new->next = next;
+
+    new->prev = head;
+    head->next = new;
 }
 
-//Removes the item from the list. Updates its next and prev pointers to itself.
-//@entry: the item of the list being deleted
-void list_del(struct list_head *entry) {
-    //Updating the nodes around the entry
-    struct list_head *prev = entry->prev; 
-    struct list_head *next = entry->next; 
-    next->prev = prev; 
-    prev->next = next;  
-
-    //updating entry
-    entry->prev = entry; 
-    entry->next = entry; 
+void list_add_tail(struct list_head *new, struct list_head *head){
+    struct list_head *next = head->next;
+    struct list_head *prev = head->prev;
+    prev->next = new;
+    new->prev = prev;
+    
+    new->next = head;
+    head->prev = new;
 }
 
-//Returns non-zero if the list is empty, or 0 if the list is not empty 
-//@head: the head node of the list in question 
-int list_empty(struct list_head *head) {
-    /*checking to make sure head does not point to itself. 
-    If it does, then that means head is the only item in the list. 
-    */
-    if (head->next == head) {  //compares addresses 
-        return 1; 
-    }
-    return 0; 
-} 
+void list_del(struct list_head *entry) { 
+    struct list_head *next = entry->next;
+    struct list_head *prev = entry->prev;
+
+    next->prev = prev;
+    prev->next = next;
+
+    //Briggs states to replicate LIST_INIT and set the entries next/prev to itself
+    entry->next = entry;
+    entry->prev = entry;
+
+}
+
+int list_empty(struct list_head *head){
+    int isEmpty = (head->next == head && head->next == head) ? 1 : 0;
+    return isEmpty;
+}
+
+void list_splice(struct list_head *list, struct list_head *head){
+    struct list_head *A = list->next;
+    struct list_head *B = list->prev;
+
+    struct list_head *C = head->next;
+    struct list_head *D = head->prev;
+
+    //Set the List's head prev (A's prev) to the Head's tail's next (D's next)
+    A->prev = D;
+    D->next = A; 
+    
+    //Set the next at the end of List to 
+    B->next = C;  //Connect B from List to the C of Head
+    C->prev = B;    //Connect C from Head to B from list
+}
+
+/**
+ * @brief Get the length of the list 
+ * 
+ * @param list 
+ * @return int 
+ */
+int getListLength(struct list_head *list) {
+    int count = 0; 
+    struct list_head *curr;
+    
+    for (curr = list->next; curr != list; curr = curr->next) {
+        count++; 
+    } 
+    return count;
+}
