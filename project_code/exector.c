@@ -104,7 +104,7 @@ void run_command(int len, struct list_head *list_args) {
 
     //takes the linked list, and turns it into an array list that can be passed to exec
     makeArgumentList(list_args, exec_arg_list, len); 
-    char *command = malloc((5 + strlen(exec_arg_list[0])) * sizeof(char));
+    char *command = malloc((6 + strlen(exec_arg_list[0])) * sizeof(char));
 
     // command becomes: /bin/<command> 
     strcpy(command, "/bin/"); 

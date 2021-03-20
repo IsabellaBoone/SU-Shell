@@ -42,21 +42,30 @@ int main(int argc, char **argv) {
 
             //printing information 
             //print_num_sentences(sentence_info.num);
-            //print_sentences(sentence_info.num, sentence_info.sentences); 
+            print_sentences(sentence_info.num, sentence_info.sentences); 
 
             for(int i=0; i<sentence_info.num; i++){
                 stringExtract(&list_args, sentence_info.sentences[i], strlen(sentence_info.sentences[i]));
             }
 
-            //displayList(&list_args);
+            displayList(&list_args);
         }
 
         //finds the length of the list, used to allocate space for the array of character pointers 
-        int list_len = getListLength(&list_args); 
-        run_command(list_len, &list_args); 
+        //int list_len = getListLength(&list_args); 
+        //run_command(list_len, &list_args); 
+
+        //TODO: Make this a seperate function in a diff file
+        for(int i=0;i<sentence_info.num; i++){
+            free(sentence_info.sentences[i]);
+        }
+        free(sentence_info.sentences);
 
         //Free list_args' and contents from memory
         clear_list(&list_args); 
+        
+        
+
     }
 
 }

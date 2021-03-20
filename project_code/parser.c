@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-//May need to remove when we remove the executor stuff 
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -114,7 +112,7 @@ void displayList(struct list_head *todo_list){
 
     for (curr = todo_list->next; curr->next != start; curr = curr->next) {
         entry = list_entry(curr, struct argument, list);
-        printf("%s\n", entry->contents);
+        printf("(%s)\n", entry->contents);
     }
 
 }
@@ -183,6 +181,7 @@ void stringExtract(struct list_head *list_args, char *input, int length){
     arg->contents = strdup("\0");
     list_add(&arg->list, list_args);
 
+    
     free(temp); 
     
 }
