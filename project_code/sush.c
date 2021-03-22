@@ -23,6 +23,7 @@
  * @return int 
  */
 int main(int argc, char **argv) {
+    struct commandline_t commandline;
     LIST_HEAD(list_args); 
     char input[INPUT_LENGTH]; 
 
@@ -33,20 +34,19 @@ int main(int argc, char **argv) {
         if(argc>0){
             int len = strlen(input); 
             input[len-1] = '\0';
-            sentence_info.num = find_num_sentences(input, len);
-            
-            //creates an array of pointers, in proportion to the number of sentences
-            sentence_info.sentences = malloc(sentence_info.num *  sizeof(char *)); 
 
-            copy_sentences(input, sentence_info.num, sentence_info.sentences);
+            commandline.num = find_num_sentences(input, len);
+            
+            //creates an array of pointers, in proportion to the number of subcommand
+            commandline.subcommand = malloc(commandline.num *  sizeof(char *)); 
+
+            copy_sentences(input, commandline.num, commandline.subcommand);
 
             //printing information 
             //print_num_sentences(sentence_info.num);
-            print_sentences(sentence_info.num, sentence_info.sentences); 
+            print_sentences(commandline.num, commandline.subcommand); 
 
-            for(int i=0; i<sentence_info.num; i++){
-                stringExtract(&list_args, sentence_info.sentences[i], strlen(sentence_info.sentences[i]));
-            }
+            stringExtract(&list_args, &commandline);
 
             displayList(&list_args);
         }
@@ -56,10 +56,10 @@ int main(int argc, char **argv) {
         //run_command(list_len, &list_args); 
 
         //TODO: Make this a seperate function in a diff file
-        for(int i=0;i<sentence_info.num; i++){
-            free(sentence_info.sentences[i]);
+        for(int i=0;i<commandline.num; i++){
+            free(commandline.subcommand[i]);
         }
-        free(sentence_info.sentences);
+        free(commandline.subcommand);
 
         //Free list_args' and contents from memory
         clear_list(&list_args); 

@@ -9,11 +9,22 @@
 
 #define INPUT_LENGTH 4094
 
+/**
+ * @brief Current state on parser 
+ * 
+ */
 enum State {
     WHITESPACE, CHARACTER, QUOTE
 }; 
 
 /**
+ * @brief Token Enum for type of argument
+ */
+enum Token {
+  REDIRECT, NORMAL, FILENAME 
+};
+
+/** 
  * Main struct for the linked list.
  * Contains the type of user input(list or dashed), the contents  (the input),
  * and the recursive list.
@@ -21,15 +32,30 @@ enum State {
 struct argument {
     char *contents;
     struct list_head list;
+    enum Token token; // 
 };
 
+/**
+ * @brief 
+ * 
+ */
+struct subcommand {
+  struct list_head list; // part of a list of subcommands
+  // struct argument *args; // a pointer to the head of arg_list
+  char **exec_args; // equivalent to lsargs in hw3
+  // enum command_type command; // internal environment, job internal, normal 
+};
 
-struct {
-  int num;
-  char **sentences;
-} sentence_info;
+/** Full line that is typed
+ */
+struct commandline_t{
+  int num; // Number of subcommands
+  char **subcommand; // 2d array of all subcommands
+  char **stdin; // would hold where the input of the function comes from 
+  char **stdout; // would hold where the command outputs to 
+};
 
-//Finds the number of sentences in the input string and returns that value. 
+//Finds the number of subcommand in the input string and returns that value. 
 int find_num_sentences(char input[], int len) {
   int i, count = 1; 
 
@@ -43,13 +69,13 @@ int find_num_sentences(char input[], int len) {
 } 
 
 //Copies an individual sentence to a pointer 
-void copy_sentence(char **sentences, char *sentence, int i) {
-  strcpy(sentences[i], sentence);
+void copy_sentence(char **subcommand, char *sentence, int i) {
+  strcpy(subcommand[i], sentence);
 }
 
 
-//Copies all the sentences from input into the array of pointers 
-void copy_sentences(char input[], int num, char **sentences) {
+//Copies all the subcommand from input into the array of pointers 
+void copy_sentences(char input[], int num, char **subcommand) {
   int i, len; 
   char* sentence = strtok(input, "|"); 
  
@@ -57,21 +83,21 @@ void copy_sentences(char input[], int num, char **sentences) {
 
   for (i = 0; i < num; i++) {
     len = strlen(sentence);
-    sentences[i] = malloc(len + 2);
-    copy_sentence(sentences, sentence, i);
+    subcommand[i] = malloc(len + 2);
+    copy_sentence(subcommand, sentence, i);
 
     sentence = strtok(NULL, "|"); 
   }
 }
 
 
-//Prints the number of sentences in input 
+//Prints the number of subcommand in input 
 void print_num_sentences(int num) {
   printf("num: %d\n", num);
 }
 
 
-//Prints the sentences in the correct format 
+//Prints the subcommand in the correct format 
 void print_sentences(int num, char **sen) {
   int i = 0; 
   for (i = 0; i < num; i++) {
@@ -120,60 +146,57 @@ void displayList(struct list_head *todo_list){
 
 /**
  * Take in the input string and length of the string as parameters.
- * Returns the amount of sentences in the input string
+ * Returns the amount of subcommand in the input string
 **/
-void stringExtract(struct list_head *list_args, char *input, int length){
+void stringExtract(struct list_head *list_args, struct commandline_t *commandline){
     int word_count = 0;
     int currentState = CHARACTER;
 
     char *temp = calloc(100, sizeof(char));  // Temporary word variable
     struct argument *arg; // Linked List
 
-    
-    for(int i=0; i<length; i++){
+    for(int i=0; i<commandline->num; i++){
+      for(int j = 0; j < strlen(commandline->subcommand[i]); j++) {
+        if((commandline->subcommand[i][j] != ' ' && commandline->subcommand[i][j] != '\t'
+             && commandline->subcommand[i][j] != '"' )) {
+               // char is a character
+               currentState = CHARACTER; // Set current state
+               strncat(temp, &commandline->subcommand[i][j], 1); 
 
-        // If we find characters to a word, add them to a temp variable
-        if ((input[i] != ' ' && input[i] != '\n' && input[i] != '\t') && (input[i] != '"')) {
-            currentState = CHARACTER; // Set current state
-
-            strncat(temp, &input[i], 1); // Copy character to temp word variable
-
-            //if we found the last word, and it has no space after
-            //add to the list
-            if(i == length-1){
-                arg = malloc(sizeof(struct argument));
-                arg->contents = strdup(temp);
-                list_add(&arg->list, list_args);
-                memset(temp, 0, 50);
-            }
-    
-        } else if (input[i] == ' ' || input[i] == '\t'){
-            if(currentState!=WHITESPACE){
-                currentState = WHITESPACE; 
-                arg = malloc(sizeof(struct argument));
-                arg->contents = strdup(temp); //store the last full word into contents of an argument
-                list_add(&arg->list, list_args); //add the argument to the list of args
-                word_count++;   //increment which word we are on
-                memset(temp, 0, 50);    //reset the temp word variable to blank
-            }
-
-        } else if (input[i] == '"') {
-            if (currentState != QUOTE) {  //starting quote
-                currentState = QUOTE; 
-                i++; 
-                while (input[i] != '"') {
-                    //printf("%c\n", input[i]); 
-                    strncat(temp, &input[i], 1);
-                    i++;
+                // if we found the last word, and it has no space after, add it to the list
+                if (j == (strlen(commandline->subcommand[i]) - 1)) {
+                  arg = malloc(sizeof(struct argument));
+                  arg->contents = strdup(temp);
+                  list_add(&arg->list, list_args);
+                  memset(temp, 0, 50);
                 }
-                arg = malloc(sizeof(struct argument));
-                arg->contents = strdup(temp); //store the last full word into contents of an argument
-                list_add(&arg->list, list_args); //add the argument to the list of args
-                memset(temp, 0, 50);    //reset the temp word variable to blank
-                currentState = WHITESPACE;
-            }
-
-        }
+             } else if(commandline->subcommand[i][j] == ' ' || commandline->subcommand[i][j] == '\t') {
+               // if we see a space or tab
+               if(currentState!=WHITESPACE) {
+                 currentState = WHITESPACE; 
+                 arg = malloc(sizeof(struct argument));
+                  arg->contents = strdup(temp); //store the last full word into contents of an argument
+                  list_add(&arg->list, list_args); //add the argument to the list of args
+                  word_count++;   //increment which word we are on
+                  memset(temp, 0, 50);    //reset the temp word variable to blank
+               }
+             } else if (commandline->subcommand[i][j] == '"') {
+               if(currentState != QUOTE) {
+                 currentState = QUOTE; 
+                 j++; 
+                 while(commandline->subcommand[i][j] != '"') {
+                   strncat(temp, &commandline->subcommand[i][j], 1);
+                   j++;
+                 }
+                 arg = malloc(sizeof(struct argument));
+                 arg->contents = strdup(temp); //store the last full word into contents of an argument
+                 list_add(&arg->list, list_args); //add the argument to the list of args
+                 memset(temp, 0, 50);    //reset the temp word variable to blank
+                 currentState = WHITESPACE;
+               }
+             }
+             // else redirect stuff
+      }
     }
 
     //The req specify ending the list of arguements with a NULL for exec
