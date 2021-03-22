@@ -2,9 +2,46 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "parser.h"
 #include "list.h"
-#include "executor.h"
+
+struct subcommand_new {
+    char *stdin; 
+    char *stdout; 
+    enum Token output_type; 
+}; 
+
+void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_new) {
+    struct list_head *curr;  
+    struct argument *entry; 
+    subcommand_new->stdin = NULL; 
+    subcommand_new->stdout = NULL; 
+
+    for (curr = arg->next; curr != arg; curr = curr->next) {
+        entry = list_entry(curr, struct argument, list); 
+        if (entry->token == REDIRECT_OUTPUT_APPEND) {
+            subcommand_new->output_type = entry->token; 
+            entry = list_entry(curr->next, struct argument, list); 
+            subcommand_new->stdout = strdup(entry->contents); 
+            list_del(curr); 
+            list_del(curr->next); 
+        } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
+            subcommand_new->output_type = entry->token; 
+            entry = list_entry(curr->next, struct argument, list);
+            subcommand_new->stdout = strdup(entry->contents); 
+            list_del(curr); 
+            list_del(curr->next); 
+        } else if (entry->token == REDIRECT_INPUT) {
+            entry = list_entry(curr->next, struct argument, list);
+            subcommand_new->stdin = strdup(entry->contents);
+            list_del(curr); 
+            list_del(curr->next); 
+        }
+        //ls -l < input.txt 
+    }
+}
 
 /**
  * @brief makes a list of arguments
@@ -48,12 +85,6 @@ void free_exec_arg_list(char **args, int len) {
 
 }
 
-/*****************************************************************************
- * I just decided to put the executor functions in the basic_parser so it'd 
- * be easier to test with the basic parser.
- * basic_executor.c 
- * **************************************************************************/
-
 /**
  * @brief Handles the execution of the child process 
  * 
@@ -83,10 +114,28 @@ void handleParentInExecutor(pid_t pid, int option) {
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
  */
-void execute(char *command, char *const *args) {
+void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
     pid_t pid = fork(); 
 
     if (pid == 0) { //Child process 
+        //if there is output
+        if (subcmd->stdout != NULL) {
+            const char *filename = subcmd->stdout; 
+            int fd = 0; 
+            if (subcmd->output_type == REDIRECT_OUTPUT_TRUNCATE) {
+                fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
+            } else if (subcmd->output_type == REDIRECT_OUTPUT_TRUNCATE) {
+                fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
+            }
+            close(STDOUT_FILENO); //closes stdout 
+            dup2(fd, STDOUT_FILENO); 
+        } 
+        if (subcmd->stdin != NULL) {
+            const char *filename = subcmd->stdin; 
+            int fd = open(filename, O_RDONLY);
+            close(STDIN_FILENO);  
+            dup2(fd, STDIN_FILENO); 
+        }
         handleChildInExecutor(command, args); 
     } else {  //Parent process 
         handleParentInExecutor(pid, 0); 
@@ -100,6 +149,11 @@ void execute(char *command, char *const *args) {
  * @param list_args The linked list of args that are being executed 
  */
 void run_command(int len, struct list_head *list_args) {
+    struct subcommand_new *subcmd = malloc(sizeof(struct subcommand_new)); 
+
+    get_input_output(list_args, subcmd);  
+
+    //int new_length = getListLength(list_args); 
     //initializes an array of character pointers that will be passed to exec()
     char **exec_arg_list = malloc(len * sizeof(char *)); 
 
@@ -112,9 +166,10 @@ void run_command(int len, struct list_head *list_args) {
     strcat(command, exec_arg_list[0]); 
 
     //executes a basic command
-    execute(command, exec_arg_list); 
+    execute(command, exec_arg_list, subcmd); 
 
     //frees the argument list
     free(command);
     free_exec_arg_list(exec_arg_list, len); 
+    free(subcmd); 
 }

@@ -1,3 +1,5 @@
+#ifndef PARSER_H
+#define PARSER_H
 // imports
 #include <stdio.h>  // for io
 #include <string.h> // for strings
@@ -8,6 +10,15 @@ enum State {
     WHITESPACE, CHARACTER, QUOTE
 }; 
 
+enum Token
+{
+  REDIRECT_INPUT,
+  REDIRECT_OUTPUT_APPEND,
+  REDIRECT_OUTPUT_TRUNCATE,
+  NORMAL,
+  FILENAME
+};
+
 
 /**
  * Main struct for the linked list.
@@ -16,6 +27,7 @@ enum State {
  */
 struct argument {
     char *contents;
+    enum Token token; 
     struct list_head list;
 };
 
@@ -84,3 +96,4 @@ int getListLength(struct list_head *list);
  * @return char* Returns a list of arguments in the char **args
  */
 void makeArgumentList(struct list_head *list, char **args, int len);
+#endif
