@@ -50,19 +50,22 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
  * @param list The list that will be turned into an array of characetr pointers 
  * @return char* Returns a list of arguments in the char **args
  */
-void makeArgumentList(struct list_head *list, char **args, int len) {
+void makeArgumentList(struct list_head *list_args, char **args, int len) {
     struct list_head *curr;  
     struct argument *entry; 
     int i = len - 1; 
-    
-    for (curr = list->next; curr != list; curr = curr->next) {
+
+    for (curr = list_args->next; curr != list_args; curr = curr->next) {
         entry = list_entry(curr, struct argument, list); 
-        args[i] = strdup(entry->contents); 
+        args[i] = strndup(entry->contents, len); 
         i--; 
     }
     
     //need to manually set the last argument to NULL, even though it is in linked list
     //may want to just not add null on the linked list 
+    // entry = malloc(sizeof(struct argument));
+    // entry->contents = strdup("\0");
+    // list_add(&entry->list, list);
     args[len - 1] = NULL; 
     //the exec args list should look something like 
     //args = {"element1", "element2", NULL}; 
@@ -149,27 +152,29 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
  * @param list_args The linked list of args that are being executed 
  */
 void run_command(int len, struct list_head *list_args) {
-    struct subcommand_new *subcmd = malloc(sizeof(struct subcommand_new)); 
+    struct subcommand_new subcmd; 
 
-    get_input_output(list_args, subcmd);  
+    get_input_output(list_args, &subcmd);  
 
-    //int new_length = getListLength(list_args); 
+    
+    int new_length = getListLength(list_args); 
+    printf("New Length=%d\n", new_length);
     //initializes an array of character pointers that will be passed to exec()
-    char **exec_arg_list = malloc(len * sizeof(char *)); 
-
+    char **exec_arg_list = malloc(new_length * sizeof(char *)); 
+    
     //takes the linked list, and turns it into an array list that can be passed to exec
-    makeArgumentList(list_args, exec_arg_list, len); 
+    makeArgumentList(list_args, exec_arg_list, new_length); 
     char *command = malloc((6 + strlen(exec_arg_list[0])) * sizeof(char));
 
     // command becomes: /bin/<command> 
     strcpy(command, "/bin/"); 
     strcat(command, exec_arg_list[0]); 
 
-    //executes a basic command
-    execute(command, exec_arg_list, subcmd); 
+    // executes a basic command
+    execute(command, exec_arg_list, &subcmd); 
 
-    //frees the argument list
+    // frees the argument list
     free(command);
     free_exec_arg_list(exec_arg_list, len); 
-    free(subcmd); 
+    //free(subcmd); 
 }

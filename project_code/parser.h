@@ -88,12 +88,5 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
  */
 int getListLength(struct list_head *list);
 
-/**
- * @brief makes a list of arguments
- * 
- * @param 
- * @param list The list that will be turned into an array of characetr pointers 
- * @return char* Returns a list of arguments in the char **args
- */
-void makeArgumentList(struct list_head *list, char **args, int len);
+
 #endif

@@ -48,11 +48,13 @@ int main(int argc, char **argv) {
 
             stringExtract(&list_args, &commandline);
 
-            displayList(&list_args);
+            //displayList(&list_args);
         }
 
         //finds the length of the list, used to allocate space for the array of character pointers 
         int list_len = getListLength(&list_args); 
+        displayList(&list_args);
+
         run_command(list_len, &list_args); 
 
         //TODO: Make this a seperate function in a diff file

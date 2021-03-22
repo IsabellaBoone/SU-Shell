@@ -39,11 +39,10 @@ enum Token
  * Contains the type of user input(list or dashed), the contents  (the input),
  * and the recursive list.
  */
-struct argument
-{
-  char *contents;
-  struct list_head list;
-  enum Token token; //
+struct argument {
+    char *contents;
+    enum Token token; 
+    struct list_head list;
 };
 
 /**
@@ -153,7 +152,7 @@ void displayList(struct list_head *todo_list)
   for (curr = todo_list->next; curr->next != start; curr = curr->next)
   {
     entry = list_entry(curr, struct argument, list);
-    printf("(%s)\n", entry->contents);
+    printf("(%s), (%d)\n", entry->contents, entry->token);
   }
 }
 
@@ -223,6 +222,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
           {
             arg = malloc(sizeof(struct argument));
             arg->contents = strdup(temp);
+            arg->token = NORMAL;
             list_add(&arg->list, list_args);
             memset(temp, 0, 50);
           }
@@ -267,6 +267,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
   //The req specify ending the list of arguements with a NULL for exec
   arg = malloc(sizeof(struct argument));
   arg->contents = strdup("\0");
+  arg->token = NORMAL;
   list_add(&arg->list, list_args);
 
   free(temp);

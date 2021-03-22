@@ -11,7 +11,7 @@ struct subcommand_new {
     enum Token output_type; 
 }; 
 
-void makeArgumentList(struct list_head *list, char **args, int len);
+void makeArgumentList(struct list_head *list_args, char **args, int len);
 void free_exec_arg_list(char **args, int len);
 void handleChildInExecutor(char *command, char *const *args);
 void handleParentInExecutor(pid_t pid, int option);
