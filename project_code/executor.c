@@ -40,7 +40,6 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             subcommand_new->output_type = entry->token; 
             entry = list_entry(curr->prev, struct argument, list);
             subcommand_new->stdout = strdup(entry->contents); 
-            printf("File: %s\n", entry->contents);
             //Move the current node ahead of our target to delete
             curr=curr->next;
             //Delete the current entry target and free from memory
@@ -54,10 +53,21 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
         } else if (entry->token == REDIRECT_INPUT) {
-            entry = list_entry(curr->next, struct argument, list);
+            subcommand_new->output_type = entry->token; 
+            entry = list_entry(curr->prev, struct argument, list);
             subcommand_new->stdin = strdup(entry->contents);
-            list_del(curr); 
-            list_del(curr->next); 
+            //Move the current node ahead of our target to delete
+            curr=curr->next;
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+
+            entry = list_entry(curr->prev, struct argument, list);
+            list_del(&entry->list); 
+            free(entry);
+
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
         }
         //ls -l < input.txt 
     }
@@ -147,7 +157,7 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
             int fd = 0; 
             if (subcmd->output_type == REDIRECT_OUTPUT_TRUNCATE) {
                 fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
-            } else if (subcmd->output_type == REDIRECT_OUTPUT_TRUNCATE) {
+            } else if (subcmd->output_type == REDIRECT_OUTPUT_APPEND) {
                 fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
             }
             close(STDOUT_FILENO); //closes stdout 
@@ -155,6 +165,7 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
         } 
         if (subcmd->stdin != NULL) {
             const char *filename = subcmd->stdin; 
+            printf("File: %s\n", subcmd->stdin);
             int fd = open(filename, O_RDONLY);
             close(STDIN_FILENO);  
             dup2(fd, STDIN_FILENO); 
