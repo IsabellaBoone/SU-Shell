@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "parser.h"
 #include "list.h"
+#include "executor.h"
 
 /**
  * @brief makes a list of arguments

@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
         }
 
         //finds the length of the list, used to allocate space for the array of character pointers 
-        //int list_len = getListLength(&list_args); 
-        //run_command(list_len, &list_args); 
+        int list_len = getListLength(&list_args); 
+        run_command(list_len, &list_args); 
 
         //TODO: Make this a seperate function in a diff file
         for(int i=0;i<commandline.num; i++){
