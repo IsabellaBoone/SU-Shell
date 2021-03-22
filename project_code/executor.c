@@ -23,16 +23,36 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
         entry = list_entry(curr, struct argument, list); 
         if (entry->token == REDIRECT_OUTPUT_APPEND) {
             subcommand_new->output_type = entry->token; 
-            entry = list_entry(curr->next, struct argument, list); 
+            entry = list_entry(curr->prev, struct argument, list);
             subcommand_new->stdout = strdup(entry->contents); 
-            list_del(curr); 
-            list_del(curr->next); 
+            //Move the current node ahead of our target to delete
+            curr=curr->next;
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+
+            entry = list_entry(curr->prev, struct argument, list);
+            list_del(&entry->list); 
+            free(entry);
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
         } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
             subcommand_new->output_type = entry->token; 
-            entry = list_entry(curr->next, struct argument, list);
+            entry = list_entry(curr->prev, struct argument, list);
             subcommand_new->stdout = strdup(entry->contents); 
-            list_del(curr); 
-            list_del(curr->next); 
+            printf("File: %s\n", entry->contents);
+            //Move the current node ahead of our target to delete
+            curr=curr->next;
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+
+            entry = list_entry(curr->prev, struct argument, list);
+            list_del(&entry->list); 
+            free(entry);
+
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
         } else if (entry->token == REDIRECT_INPUT) {
             entry = list_entry(curr->next, struct argument, list);
             subcommand_new->stdin = strdup(entry->contents);
@@ -175,6 +195,6 @@ void run_command(int len, struct list_head *list_args) {
 
     // frees the argument list
     free(command);
-    free_exec_arg_list(exec_arg_list, len); 
+    free_exec_arg_list(exec_arg_list, new_length); 
     //free(subcmd); 
 }
