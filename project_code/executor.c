@@ -93,9 +93,6 @@ void makeArgumentList(struct list_head *list_args, char **args, int len) {
     
     //need to manually set the last argument to NULL, even though it is in linked list
     //may want to just not add null on the linked list 
-    // entry = malloc(sizeof(struct argument));
-    // entry->contents = strdup("\0");
-    // list_add(&entry->list, list);
     args[len - 1] = NULL; 
     //the exec args list should look something like 
     //args = {"element1", "element2", NULL}; 
