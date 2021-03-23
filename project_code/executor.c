@@ -53,7 +53,6 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
         } else if (entry->token == REDIRECT_INPUT) {
-            subcommand_new->output_type = entry->token; 
             entry = list_entry(curr->prev, struct argument, list);
             subcommand_new->stdin = strdup(entry->contents);
             //Move the current node ahead of our target to delete
@@ -69,7 +68,6 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
         }
-        //ls -l < input.txt 
     }
 }
 
@@ -162,7 +160,6 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
         } 
         if (subcmd->stdin != NULL) {
             const char *filename = subcmd->stdin; 
-            printf("File: %s\n", filename);
             int fd = open(filename, O_RDONLY);
             close(STDIN_FILENO);  
             dup2(fd, STDIN_FILENO); 
@@ -186,7 +183,6 @@ void run_command(int len, struct list_head *list_args) {
 
     
     int new_length = getListLength(list_args); 
-    printf("New Length=%d\n", new_length);
     //initializes an array of character pointers that will be passed to exec()
     char **exec_arg_list = malloc(new_length * sizeof(char *)); 
     
@@ -199,7 +195,6 @@ void run_command(int len, struct list_head *list_args) {
     strcat(command, exec_arg_list[0]); 
 
     // executes a basic command
-    printf("%s\n", command);
     execute(command, exec_arg_list, &subcmd); 
 
     // frees the argument list
