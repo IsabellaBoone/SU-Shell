@@ -84,10 +84,10 @@ void makeArgumentList(struct list_head *list_args, char **args, int len) {
     struct list_head *curr;  
     struct argument *entry; 
     int i = len - 1; 
-
+    
     for (curr = list_args->next; curr != list_args; curr = curr->next) {
         entry = list_entry(curr, struct argument, list); 
-        args[i] = strndup(entry->contents, len); 
+        args[i] = strndup(entry->contents, strlen(entry->contents)); 
         i--; 
     }
     
@@ -165,7 +165,7 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
         } 
         if (subcmd->stdin != NULL) {
             const char *filename = subcmd->stdin; 
-            printf("File: %s\n", subcmd->stdin);
+            printf("File: %s\n", filename);
             int fd = open(filename, O_RDONLY);
             close(STDIN_FILENO);  
             dup2(fd, STDIN_FILENO); 
@@ -195,13 +195,14 @@ void run_command(int len, struct list_head *list_args) {
     
     //takes the linked list, and turns it into an array list that can be passed to exec
     makeArgumentList(list_args, exec_arg_list, new_length); 
-    char *command = malloc((6 + strlen(exec_arg_list[0])) * sizeof(char));
+    char *command = calloc((new_length + strlen(exec_arg_list[0])),  sizeof(char));
 
     // command becomes: /bin/<command> 
     strcpy(command, "/bin/"); 
     strcat(command, exec_arg_list[0]); 
 
     // executes a basic command
+    printf("%s\n", command);
     execute(command, exec_arg_list, &subcmd); 
 
     // frees the argument list
