@@ -80,13 +80,4 @@ void displayList(struct list_head *todo_list);
 **/
 void stringExtract(struct list_head *list_args, struct commandline_t *commandline);
 
-/**
- * @brief Get the length of the list 
- * 
- * @param list 
- * @return int 
- */
-int getListLength(struct list_head *list);
-
-
 #endif

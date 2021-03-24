@@ -1,4 +1,3 @@
-//May need to remove when we remove the executor stuff 
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -7,24 +6,24 @@
 #include "parser.h"
 #include "list.h"
 
-struct subcommand_new {
+struct subcommand {
     char *stdin; 
     char *stdout; 
     enum Token output_type; 
 }; 
 
-void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_new) {
+void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
     struct list_head *curr;  
     struct argument *entry; 
-    subcommand_new->stdin = NULL; 
-    subcommand_new->stdout = NULL; 
+    subcommand->stdin = NULL; 
+    subcommand->stdout = NULL; 
 
     for (curr = arg->next; curr != arg; curr = curr->next) {
         entry = list_entry(curr, struct argument, list); 
         if (entry->token == REDIRECT_OUTPUT_APPEND) {
-            subcommand_new->output_type = entry->token; 
+            subcommand->output_type = entry->token; 
             entry = list_entry(curr->prev, struct argument, list);
-            subcommand_new->stdout = strdup(entry->contents); 
+            subcommand->stdout = strdup(entry->contents); 
             //Move the current node ahead of our target to delete
             curr=curr->next;
             //Delete the current entry target and free from memory
@@ -37,9 +36,9 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
         } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
-            subcommand_new->output_type = entry->token; 
+            subcommand->output_type = entry->token; 
             entry = list_entry(curr->prev, struct argument, list);
-            subcommand_new->stdout = strdup(entry->contents); 
+            subcommand->stdout = strdup(entry->contents); 
             //Move the current node ahead of our target to delete
             curr=curr->next;
             //Delete the current entry target and free from memory
@@ -54,7 +53,7 @@ void get_input_output(struct list_head *arg, struct subcommand_new *subcommand_n
             arg=curr;
         } else if (entry->token == REDIRECT_INPUT) {
             entry = list_entry(curr->prev, struct argument, list);
-            subcommand_new->stdin = strdup(entry->contents);
+            subcommand->stdin = strdup(entry->contents);
             //Move the current node ahead of our target to delete
             curr=curr->next;
             //Delete the current entry target and free from memory
@@ -142,7 +141,7 @@ void handleParentInExecutor(pid_t pid, int option) {
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
  */
-void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
+void execute(char *command, char *const *args, struct subcommand *subcmd) {
     pid_t pid = fork(); 
 
     if (pid == 0) { //Child process 
@@ -177,7 +176,7 @@ void execute(char *command, char *const *args, struct subcommand_new *subcmd) {
  * @param list_args The linked list of args that are being executed 
  */
 void run_command(int len, struct list_head *list_args) {
-    struct subcommand_new subcmd; 
+    struct subcommand subcmd; 
 
     get_input_output(list_args, &subcmd);  
 

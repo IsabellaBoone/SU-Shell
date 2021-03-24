@@ -14,6 +14,8 @@
 #include "list.h"
 #include "parser.h"
 #include "executor.h"
+#include "internal.h" 
+
 #define INPUT_LENGTH 4094
 
 
@@ -48,14 +50,19 @@ int main(int argc, char **argv) {
 
             stringExtract(&list_args, &commandline);
 
-            //displayList(&list_args);
+            displayList(&list_args); 
         }
 
-        //finds the length of the list, used to allocate space for the array of character pointers 
-        int list_len = getListLength(&list_args); 
-        displayList(&list_args);
+        //Testing for the internal commands: 
+        printf("----Handling Commands: ----\n"); 
+        handle_internal(&list_args); 
+        printf("---- Did it work??? ----\n"); 
 
-        run_command(list_len, &list_args); 
+        //finds the length of the list, used to allocate space for the array of character pointers 
+        // int list_len = getListLength(&list_args); 
+        // displayList(&list_args);
+
+        // run_command(list_len, &list_args); 
 
         //TODO: Make this a seperate function in a diff file
         for(int i=0;i<commandline.num; i++){
