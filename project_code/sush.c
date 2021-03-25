@@ -28,8 +28,11 @@ int main(int argc, char **argv) {
     struct commandline_t commandline;
     LIST_HEAD(list_args); 
     char input[INPUT_LENGTH]; 
+    setenv("PS1", ">", 1); 
 
     while(1){
+        printf("%s", getenv("PS1"));
+        fflush(stdout); 
         fgets(input, INPUT_LENGTH, stdin); 
 
         //printf("Before: %d", input);
