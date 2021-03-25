@@ -54,15 +54,17 @@ int main(int argc, char **argv) {
         }
 
         //Testing for the internal commands: 
-        printf("----Handling Commands: ----\n"); 
-        handle_internal(&list_args); 
-        printf("---- Did it work??? ----\n"); 
-
-        //finds the length of the list, used to allocate space for the array of character pointers 
-        // int list_len = getListLength(&list_args); 
-        // displayList(&list_args);
-
-        // run_command(list_len, &list_args); 
+        int internal_code = handle_internal(&list_args);
+        printf("%d\n", internal_code);
+        if(internal_code == 1){
+            //finds the length of the list, used to allocate space for the array of character pointers 
+            int list_len = getListLength(&list_args); 
+            // displayList(&list_args);
+           // run_command(list_len, commandline.num, &list_args, envp); 
+        }else if( internal_code == -1){
+            printf("Error has occured");
+        }
+        
 
         //TODO: Make this a seperate function in a diff file
         for(int i=0;i<commandline.num; i++){

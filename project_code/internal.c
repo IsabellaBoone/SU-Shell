@@ -122,12 +122,15 @@ static int handle_getenv(struct list_head *subcommand) {
     //error check
     if (env == NULL) {
       fprintf(stderr, ERROR_GETENV_INVALID, name); 
+      return -1; 
     }
 
     printf("%s\n", env); 
   } else { //error: there ere not enough arguments or too many 
     fprintf(stderr, ERROR_GETENV_ARG);
+    return -1; 
   }
+  return 0;
 }
 
 /**
@@ -147,6 +150,7 @@ static int handle_unsetenv(struct list_head *subcommand) {
   *name++; 
   int status = unsetenv(name); 
   check_status(status, "unsetenv"); 
+  return 0;
 }
 
 /**
@@ -167,6 +171,7 @@ static int handle_cd(struct list_head *subcommand) {
     //TODO: should this check actually be applied to the return of getenv?
     if (status == -1) {
       fprintf(stderr, ERROR_CD_NOHOME); 
+      return -1; 
     }
   } else if (num_args == 2 + 1) { //subcommand: cd pathname
     char *path = get_second_argument(subcommand); 
@@ -176,7 +181,11 @@ static int handle_cd(struct list_head *subcommand) {
 
   } else { //too many args 
     fprintf(stderr, ERROR_CD_ARG); 
+    return -1;    
   }
+
+    return 0;
+
 }
 
 /**
@@ -201,6 +210,8 @@ static int handle_pwd(struct list_head *subcommand) {
   if (status == NULL) {
     check_status(-1, "pwd"); 
   }
+
+  return 0;
 }
  
 /**
@@ -246,5 +257,5 @@ int handle_internal(struct list_head *subcommand) {
     }
     i++;
   }
-  return 0; 
+  return 1; 
 }
