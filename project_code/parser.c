@@ -6,15 +6,25 @@
 #include <unistd.h>
 
 #include "list.h"
+#include "datastructures.h"
 
-#define INPUT_LENGTH 4094
+#define MAX_BUFFER 4096
+
+#define SPACE ' '
+#define TAB '\t'
+#define NEWLINE '\n'
+#define QUOTATIONMARK '"'
+#define PIPE '|'
+#define REDIR_IN '>'
+#define REDIR_OUT '<'
+
 
 /**
  * @brief Current state on parser 
- * 
  */
 enum State
 {
+  START,
   WHITESPACE,
   CHARACTER,
   QUOTE,
@@ -23,56 +33,19 @@ enum State
 };
 
 /**
- * @brief Token Enum for type of argument
- */
-enum Token
-{
-  REDIRECT_INPUT,
-  REDIRECT_OUTPUT_APPEND,
-  REDIRECT_OUTPUT_TRUNCATE,
-  NORMAL,
-  FILENAME
-};
-
-/** 
- * Main struct for the linked list.
- * Contains the type of user input(list or dashed), the contents  (the input),
- * and the recursive list.
- */
-struct argument {
-    char *contents;
-    enum Token token; 
-    struct list_head list;
-};
-
-/**
- * @brief 
+ * @brief Find the number of subcommands in the input string and returns that value. 
  * 
+ * @param input String to search through
+ * @param len int length of String
+ * @return int number of subcommands found
  */
-struct subcommand
-{
-  struct list_head list; // part of a list of subcommands
-  // struct argument *args; // a pointer to the head of arg_list
-  char **exec_args; // equivalent to lsargs in hw3
-  // enum command_type command; // internal environment, job internal, normal
-};
-
-/** Full line that is typed
- */
-struct commandline_t
-{
-  int num;           // Number of subcommands
-  char **subcommand; // 2d array of all subcommands
-};
-
-//Finds the number of subcommand in the input string and returns that value.
 int find_num_sentences(char input[], int len)
 {
   int i, count = 1;
 
   for (i = 0; i < len; i++)
   {
-    if (input[i] == '|')
+    if (input[i] == PIPE)
     {
       count++;
     }
@@ -81,14 +54,26 @@ int find_num_sentences(char input[], int len)
   return count;
 }
 
-//Copies an individual sentence to a pointer
-void copy_sentence(char **subcommand, char *sentence, int i)
+/**
+ * @brief Copy an individual subcommand to a pointer
+ * 
+ * @param subcommand 2D char array to copy from.
+ * @param sentence char * destination to copy to
+ * @param i which sentence in subcommand to copy
+ */
+void copy_subcommand(char **subcommand, char *destination, int i)
 {
-  strcpy(subcommand[i], sentence);
+  strcpy(subcommand[i], destination);
 }
 
-//Copies all the subcommand from input into the array of pointers
-void copy_sentences(char input[], int num, char **subcommand)
+/**
+ * @brief Copy a String of subcommands into a 2D array of subcommands. 
+ * 
+ * @param input String to break apart
+ * @param num int number of subcommands in String
+ * @param subcommand 2D char array to copy subcommands into
+ */
+void copy_subcommands(char input[], int num, char **subcommand)
 {
   int i, len;
   char *sentence = strtok(input, "|");
@@ -99,40 +84,50 @@ void copy_sentences(char input[], int num, char **subcommand)
   {
     len = strlen(sentence);
     subcommand[i] = malloc(len + 2);
-    copy_sentence(subcommand, sentence, i);
+    copy_subcommand(subcommand, sentence, i);
 
     sentence = strtok(NULL, "|");
   }
 }
 
-//Prints the number of subcommand in input
-void print_num_sentences(int num)
+/**
+ * @brief Print number of subcommands in the input
+ * 
+ * @param num int number of subcommands
+ */
+void print_num_subcommands(int num)
 {
   printf("num: %d\n", num);
 }
 
-//Prints the subcommand in the correct format
-void print_sentences(int num, char **sen)
+/**
+ * @brief Print subcommand in correct form. 
+ * 
+ * @param num number of commands in subcommands
+ * @param subcommands 2D char array of subcommands to print 
+ */
+void print_subcommands(int num, char **subcommands)
 {
   int i = 0;
   for (i = 0; i < num; i++)
   {
-    printf("%d : (%s)\n", i, sen[i]);
+    printf("%d : (%s)\n", i, subcommands[i]);
   }
 }
 
 /**
- * Receives a linked list of our list_head struct.
- * The function will traverse through our linked list and
- * free it from memory after deleting each node entry.
+ * @brief Traverse through linked list and free it from memory
+ * after deleting each node entry. 
+ * 
+ * @param list struct list_head to clear
  */
 void clear_list(struct list_head *list)
 {
-  struct argument *entry; //Current entry  during traversal
+  argument *entry; //Current entry  during traversal
 
   while (!list_empty(list))
   {
-    entry = list_entry(list->next, struct argument, list);
+    entry = list_entry(list->next, argument, list);
     list_del(&entry->list);
     free(entry->contents);
     free(entry);
@@ -140,121 +135,106 @@ void clear_list(struct list_head *list)
 }
 
 /**
- * Recurses through a given list_head struct's list,
- * and prints the contents to the console.
+ * @brief Navigate through list and print contents to console. 
+ * 
+ * @param list struct list_head to print
  */
-void displayList(struct list_head *todo_list)
+void display_list(struct list_head *list)
 {
-  struct list_head *start = todo_list->next; //Start at the first node after the head
-  struct list_head *curr;                    //Tracks current node during traversal
-  struct argument *entry;                    //Current nodes struct with contents
+  struct list_head *start = list->next; //Start at the first node after the head
+  struct list_head *curr; //Tracks current node during traversal
+  argument *entry; //Current nodes struct with contents
 
-  for (curr = todo_list->next; curr->next != start; curr = curr->next)
+  for (curr = list->next; curr->next != start; curr = curr->next)
   {
-    entry = list_entry(curr, struct argument, list);
+    entry = list_entry(curr, argument, list);
     printf("(%s), (%d)\n", entry->contents, entry->token);
   }
 }
 
-/**
- * Take in the input string and length of the string as parameters.
- * Returns the amount of subcommand in the input string
-**/
-void stringExtract(struct list_head *list_args, struct commandline_t *commandline)
+
+void parse_commandline(struct list_head *list_args, commandline *commandline)
 {
-  int word_count = 0;
-  int currentState = CHARACTER;
+  int word_count = 0; // 
+  int currentState = CHARACTER; // Start in character state by default
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
-  struct argument *arg;                   // Linked List
-
+  argument *arg; // Linked List of arguments
+  
+  // For every subcommand 
   for (int i = 0; i < commandline->num; i++)
   {
-    for (int j = 0; j < strlen(commandline->subcommand[i]); j++)
-    {
-      if ((commandline->subcommand[i][j] != ' ' && commandline->subcommand[i][j] != '\t' && commandline->subcommand[i][j] != '"'))
-      {
-        arg = malloc(sizeof(struct argument));
-        if (commandline->subcommand[i][j] == '>')
-        {
-          if (commandline->subcommand[i][j + 1] == '>')
-          {
-            arg->token = REDIRECT_OUTPUT_APPEND;
-            strncat(temp, &commandline->subcommand[i][j], 2);
-          }
-          else
-          {
-            arg->token = REDIRECT_OUTPUT_TRUNCATE;
-            strncat(temp, &commandline->subcommand[i][j], 1);
+    // For every character in the subcommand
+    for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
+      char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
+
+      // If the current char is not a space, tab, or quotation mark
+      if ((current_character != SPACE && current_character != TAB && current_character != QUOTATIONMARK)) {
+        arg = malloc(sizeof(argument)); 
+        // If we encounter redirect symbol
+        if (current_character == REDIR_IN) {
+          // If we encounter two redir_in symbols ">>"
+          if (commandline->subcommand[i][j + 1] == REDIR_IN) {
+            arg->token = REDIRECT_OUTPUT_APPEND; // Set token to redirect + append
+            strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
+          } else {
+            // Otherwise, we only encountered one redir_in '>'
+            arg->token = REDIRECT_OUTPUT_TRUNCATE; // Set token to redirect + truncate
+            strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
           }
 
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
-          memset(temp, 0, 50);
+          arg->contents = strdup(temp); // Store the last full word into contents of an argument
+          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
+          memset(temp, 0, 50); // Clear memory
 
-          /**
-           * @brief Increment J so we don't run into this again 
-           * 
-           */
-          if (arg->token == REDIRECT_OUTPUT_APPEND)
-          {
+          // Increment J so we don't run this again
+          if (arg->token == REDIRECT_OUTPUT_APPEND) {
             j++;
           }
-        }
-        else if (commandline->subcommand[i][j] == '<')
-        {
-          arg = malloc(sizeof(struct argument));
-          arg->token = REDIRECT_INPUT;
-          strncat(temp, &commandline->subcommand[i][j], 1);
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
-          memset(temp, 0, 50);
-        }
-        else
-        {
-
-          // char is a character
+        } else if (current_character == REDIR_OUT) {
+          // If we encounter the redirect output symbol
+          arg = malloc(sizeof(argument)); 
+          arg->token = REDIRECT_INPUT; // Set token to redirect input 
+          strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
+          arg->contents = strdup(temp); // Store the last full word into contents of an argument
+          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
+          memset(temp, 0, 50); // Clear memory
+        } else {
+          // Current char is a character
           currentState = CHARACTER; // Set current state
-          strncat(temp, &commandline->subcommand[i][j], 1);
+          strncat(temp, &commandline->subcommand[i][j], 1); // Copy character
 
           // if we found the last word, and it has no space after, add it to the list
-          if (j == (strlen(commandline->subcommand[i]) - 1))
-          {
-            arg = malloc(sizeof(struct argument));
-            arg->contents = strdup(temp);
-            arg->token = NORMAL;
-            list_add_tail(&arg->list, list_args);
+          if (j == (strlen(commandline->subcommand[i]) - 1)) {
+            arg = malloc(sizeof(argument)); 
+            arg->contents = strdup(temp); // Copy temp to contents
+            arg->token = NORMAL; // Set token to normal
+            list_add_tail(&arg->list, list_args); // Add to the end of the list
             memset(temp, 0, 50);
           }
-        }
-      }
-      else if (commandline->subcommand[i][j] == ' ' || commandline->subcommand[i][j] == '\t')
-      {
-        // if we see a space or tab
-        if (currentState != WHITESPACE)
-        {
+        } 
+      } else if (current_character == SPACE || current_character == TAB) {
+        // If we see a space or tab
+        if (currentState != WHITESPACE) {
           currentState = WHITESPACE;
-          arg = malloc(sizeof(struct argument));
+          arg = malloc(sizeof(argument));
           arg->token = NORMAL;             // set token to normal
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
           list_add_tail(&arg->list, list_args); //add the argument to the list of args
           word_count++;                    //increment which word we are on
           memset(temp, 0, 50);             //reset the temp word variable to blank
         }
-      }
-      else if (commandline->subcommand[i][j] == '"')
-      {
-        if (currentState != QUOTE)
-        {
+      } else if (current_character == QUOTATIONMARK) {
+        if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
-          while (commandline->subcommand[i][j] != '"')
+          while (current_character != QUOTATIONMARK)
           {
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;
           }
           arg->token = NORMAL; // set token to normal
-          arg = malloc(sizeof(struct argument));
+          arg = malloc(sizeof(argument));
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
           list_add_tail(&arg->list, list_args); //add the argument to the list of args
           memset(temp, 0, 50);             //reset the temp word variable to blank
@@ -263,7 +243,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
       }
     }
     //The req specify ending the list of arguements with a NULL for exec
-    arg = malloc(sizeof(struct argument));
+    arg = malloc(sizeof(argument));
     arg->contents = strdup("\0");
     arg->token = NORMAL;
     list_add_tail(&arg->list, list_args);
@@ -272,3 +252,6 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
 
   free(temp);
 }
+
+
+
