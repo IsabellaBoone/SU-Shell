@@ -3,7 +3,8 @@
  * @author Isabella Boone 
  * @author John Gable
  * @author Hannah Moats
- * @brief This file contains all data structures and enums needed. 
+ * @brief This file contains all data structures and enums needed 
+ *   for holding a command line argument. 
  * @version 0.1
  * @date 2021-03-25
  * 
@@ -11,17 +12,16 @@
  * 
  */
 
-// file guard
+// File Guard
 #ifndef DATASTRUCTURES_H
 #define DATASTRUCTURES_H
 
-// imports
+// Imports
 #include <string.h> // for strings
 #include "list.h" // for navigating lists
 
 /**
  * @brief Enum to describe what type of argument is held. 
- * 
  */
 enum Token
 {

@@ -8,17 +8,23 @@
 #include "list.h"
 #include "datastructures.h"
 
+#define MAX_BUFFER 4096
+
 #define SPACE ' '
 #define TAB '\t'
 #define NEWLINE '\n'
 #define QUOTATIONMARK '"'
 #define PIPE '|'
+#define REDIR_IN '>'
+#define REDIR_OUT '<'
+
 
 /**
  * @brief Current state on parser 
  */
 enum State
 {
+  START,
   WHITESPACE,
   CHARACTER,
   QUOTE,
@@ -146,85 +152,70 @@ void display_list(struct list_head *list)
   }
 }
 
-/**
- * @brief Parse through a list of arguments character by character. 
- * 
- * @param list_args List of arguments to parse through
- * @param commandline to be parsed through
- */
+
 void parse_commandline(struct list_head *list_args, commandline *commandline)
 {
-  int word_count = 0;
-  int currentState = CHARACTER;
+  int word_count = 0; // 
+  int currentState = CHARACTER; // Start in character state by default
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
-  argument *arg;                   // Linked List
-
+  argument *arg; // Linked List of arguments
+  
+  // For every subcommand 
   for (int i = 0; i < commandline->num; i++)
   {
-    for (int j = 0; j < strlen(commandline->subcommand[i]); j++)
-    {
-      if ((commandline->subcommand[i][j] != ' ' && commandline->subcommand[i][j] != '\t' && commandline->subcommand[i][j] != '"'))
-      {
-        arg = malloc(sizeof(argument));
-        if (commandline->subcommand[i][j] == '>')
-        {
-          if (commandline->subcommand[i][j + 1] == '>')
-          {
-            arg->token = REDIRECT_OUTPUT_APPEND;
-            strncat(temp, &commandline->subcommand[i][j], 2);
-          }
-          else
-          {
-            arg->token = REDIRECT_OUTPUT_TRUNCATE;
-            strncat(temp, &commandline->subcommand[i][j], 1);
+    // For every character in the subcommand
+    for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
+      char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
+
+      // If the current char is not a space, tab, or quotation mark
+      if ((current_character != SPACE && current_character != TAB && current_character != QUOTATIONMARK)) {
+        arg = malloc(sizeof(argument)); 
+        // If we encounter redirect symbol
+        if (current_character == REDIR_IN) {
+          // If we encounter two redir_in symbols ">>"
+          if (commandline->subcommand[i][j + 1] == REDIR_IN) {
+            arg->token = REDIRECT_OUTPUT_APPEND; // Set token to redirect + append
+            strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
+          } else {
+            // Otherwise, we only encountered one redir_in '>'
+            arg->token = REDIRECT_OUTPUT_TRUNCATE; // Set token to redirect + truncate
+            strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
           }
 
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
-          memset(temp, 0, 50);
+          arg->contents = strdup(temp); // Store the last full word into contents of an argument
+          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
+          memset(temp, 0, 50); // Clear memory
 
-          /**
-           * @brief Increment J so we don't run into this again 
-           * 
-           */
-          if (arg->token == REDIRECT_OUTPUT_APPEND)
-          {
+          // Increment J so we don't run this again
+          if (arg->token == REDIRECT_OUTPUT_APPEND) {
             j++;
           }
-        }
-        else if (commandline->subcommand[i][j] == '<')
-        {
-          arg = malloc(sizeof(argument));
-          arg->token = REDIRECT_INPUT;
-          strncat(temp, &commandline->subcommand[i][j], 1);
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
-          memset(temp, 0, 50);
-        }
-        else
-        {
-
-          // char is a character
+        } else if (current_character == REDIR_OUT) {
+          // If we encounter the redirect output symbol
+          arg = malloc(sizeof(argument)); 
+          arg->token = REDIRECT_INPUT; // Set token to redirect input 
+          strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
+          arg->contents = strdup(temp); // Store the last full word into contents of an argument
+          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
+          memset(temp, 0, 50); // Clear memory
+        } else {
+          // Current char is a character
           currentState = CHARACTER; // Set current state
-          strncat(temp, &commandline->subcommand[i][j], 1);
+          strncat(temp, &commandline->subcommand[i][j], 1); // Copy character
 
           // if we found the last word, and it has no space after, add it to the list
-          if (j == (strlen(commandline->subcommand[i]) - 1))
-          {
-            arg = malloc(sizeof(argument));
-            arg->contents = strdup(temp);
-            arg->token = NORMAL;
-            list_add_tail(&arg->list, list_args);
+          if (j == (strlen(commandline->subcommand[i]) - 1)) {
+            arg = malloc(sizeof(argument)); 
+            arg->contents = strdup(temp); // Copy temp to contents
+            arg->token = NORMAL; // Set token to normal
+            list_add_tail(&arg->list, list_args); // Add to the end of the list
             memset(temp, 0, 50);
           }
-        }
-      }
-      else if (commandline->subcommand[i][j] == ' ' || commandline->subcommand[i][j] == '\t')
-      {
-        // if we see a space or tab
-        if (currentState != WHITESPACE)
-        {
+        } 
+      } else if (current_character == SPACE || current_character == TAB) {
+        // If we see a space or tab
+        if (currentState != WHITESPACE) {
           currentState = WHITESPACE;
           arg = malloc(sizeof(argument));
           arg->token = NORMAL;             // set token to normal
@@ -233,14 +224,11 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
           word_count++;                    //increment which word we are on
           memset(temp, 0, 50);             //reset the temp word variable to blank
         }
-      }
-      else if (commandline->subcommand[i][j] == '"')
-      {
-        if (currentState != QUOTE)
-        {
+      } else if (current_character == QUOTATIONMARK) {
+        if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
-          while (commandline->subcommand[i][j] != '"')
+          while (current_character != QUOTATIONMARK)
           {
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;
@@ -264,3 +252,6 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
 
   free(temp);
 }
+
+
+
