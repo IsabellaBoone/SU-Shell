@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
             //finds the length of the list, used to allocate space for the array of character pointers 
             int list_len = getListLength(&list_args); 
             // displayList(&list_args);
-           // run_command(list_len, commandline.num, &list_args, envp); 
+            run_command(list_len, commandline.num, &list_args); 
         }else if( internal_code == -1){
             printf("Error has occured");
         }

@@ -16,5 +16,5 @@ void free_exec_arg_list(char **args, int len);
 void handleChildInExecutor(char *command, char *const *args);
 void handleParentInExecutor(pid_t pid, int option);
 void execute(char *command, char *const *args, struct subcommand *subcmd);
-void run_command(int len, struct list_head *list_args);
+void run_command(int len, int subcommand_count, struct list_head *list_args);
 #endif

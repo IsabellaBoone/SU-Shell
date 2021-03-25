@@ -175,29 +175,49 @@ void execute(char *command, char *const *args, struct subcommand *subcmd) {
  * @param len The length of the linked list 
  * @param list_args The linked list of args that are being executed 
  */
-void run_command(int len, struct list_head *list_args) {
+void run_command(int len, int subcommand_count, struct list_head *list_args) {
+
     struct subcommand subcmd; 
-
     get_input_output(list_args, &subcmd);  
-
-    
     int new_length = getListLength(list_args); 
-    //initializes an array of character pointers that will be passed to exec()
-    char **exec_arg_list = malloc(new_length * sizeof(char *)); 
-    
-    //takes the linked list, and turns it into an array list that can be passed to exec
-    makeArgumentList(list_args, exec_arg_list, new_length); 
-    char *command = calloc((new_length + strlen(exec_arg_list[0])),  sizeof(char));
 
-    // command becomes: /bin/<command> 
-    strcpy(command, "/bin/"); 
-    strcat(command, exec_arg_list[0]); 
+    if(subcommand_count>=1){
+        //initializes an array of character pointers that will be passed to exec()
+        char **exec_arg_list = malloc(new_length * sizeof(char *)); 
+        
+        //takes the linked list, and turns it into an array list that can be passed to exec
+        struct list_head *curr;  
+        struct argument *entry; 
+        int i = 0; 
+        
+        for (curr = list_args->next; curr != list_args; curr = curr->next) {
+            entry = list_entry(curr, struct argument, list); 
+            exec_arg_list[i] = strndup(entry->contents, strlen(entry->contents)); 
+            i++;
+            if(strlen(entry->contents)==0){
+                // printf("i=%d\n", i);
+                // printf("len-1=%d\n", len-1);
+                // need to manually set the last argument to NULL, even though it is in linked list
+                //may want to just not add null on the linked list 
+                exec_arg_list[i-1] = NULL; 
+                char *command = calloc((new_length + strlen(exec_arg_list[0])),  sizeof(char));
 
-    // executes a basic command
-    execute(command, exec_arg_list, &subcmd); 
+                // command becomes: /bin/<command> 
+                strcpy(command, "/bin/"); 
+                strcat(command, exec_arg_list[0]); 
+
+                // executes a basic command
+                execute(command, exec_arg_list, &subcmd);
+                memset(command, 0, sizeof(command));
+                memset(exec_arg_list, 0, sizeof(exec_arg_list));
+                i=0;
+            }
+        }
+    }
+     
 
     // frees the argument list
-    free(command);
-    free_exec_arg_list(exec_arg_list, new_length); 
+    // free(command);
+    // free_exec_arg_list(exec_arg_list, new_length); 
     //free(subcmd); 
 }

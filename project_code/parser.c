@@ -189,7 +189,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
           }
 
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add(&arg->list, list_args); //add the argument to the list of args
+          list_add_tail(&arg->list, list_args); //add the argument to the list of args
           memset(temp, 0, 50);
 
           /**
@@ -207,7 +207,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
           arg->token = REDIRECT_INPUT;
           strncat(temp, &commandline->subcommand[i][j], 1);
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add(&arg->list, list_args); //add the argument to the list of args
+          list_add_tail(&arg->list, list_args); //add the argument to the list of args
           memset(temp, 0, 50);
         }
         else
@@ -223,7 +223,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
             arg = malloc(sizeof(struct argument));
             arg->contents = strdup(temp);
             arg->token = NORMAL;
-            list_add(&arg->list, list_args);
+            list_add_tail(&arg->list, list_args);
             memset(temp, 0, 50);
           }
         }
@@ -237,7 +237,7 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
           arg = malloc(sizeof(struct argument));
           arg->token = NORMAL;             // set token to normal
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add(&arg->list, list_args); //add the argument to the list of args
+          list_add_tail(&arg->list, list_args); //add the argument to the list of args
           word_count++;                    //increment which word we are on
           memset(temp, 0, 50);             //reset the temp word variable to blank
         }
@@ -256,19 +256,19 @@ void stringExtract(struct list_head *list_args, struct commandline_t *commandlin
           arg->token = NORMAL; // set token to normal
           arg = malloc(sizeof(struct argument));
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add(&arg->list, list_args); //add the argument to the list of args
+          list_add_tail(&arg->list, list_args); //add the argument to the list of args
           memset(temp, 0, 50);             //reset the temp word variable to blank
           currentState = WHITESPACE;
         }
       }
     }
+    //The req specify ending the list of arguements with a NULL for exec
+    arg = malloc(sizeof(struct argument));
+    arg->contents = strdup("\0");
+    arg->token = NORMAL;
+    list_add_tail(&arg->list, list_args);
   }
 
-  //The req specify ending the list of arguements with a NULL for exec
-  arg = malloc(sizeof(struct argument));
-  arg->contents = strdup("\0");
-  arg->token = NORMAL;
-  list_add(&arg->list, list_args);
 
   free(temp);
 }
