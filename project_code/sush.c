@@ -8,17 +8,17 @@
  * @date 2021-03-16
  */
 
+// Imports
 #include <stdio.h> // for expert debugging
 #include <stdlib.h> // for memory allocation
-// #include "Commands/file.h"
-// #include "Commands/commandlist.h"
+
+// Imports from our files
 #include "list.h"
 #include "datastructures.h"
 #include "executor.h"
 #include "internal.h" 
 
-#define INPUT_LENGTH 4094
-
+#define INPUT_LENGTH 4094 // Max input length for strings
 
 /**
  * @brief Project 2: Shell Project 
@@ -43,11 +43,11 @@ int main(int argc, char **argv) {
             //creates an array of pointers, in proportion to the number of subcommand
             cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
 
-            copy_sentences(input, cmdline.num, cmdline.subcommand);
+            copy_subcommands(input, cmdline.num, cmdline.subcommand);
 
             //printing information 
             //print_num_sentences(sentence_info.num);
-            print_sentences(cmdline.num, cmdline.subcommand); 
+            print_subcommands(cmdline.num, cmdline.subcommand); 
 
             stringExtract(&list_args, &cmdline);
 

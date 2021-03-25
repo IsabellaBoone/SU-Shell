@@ -29,31 +29,31 @@ enum State
  * Contains the type of user input(list or dashed), the contents  (the input),
  * and the recursive list.
  */
-struct argument {
-    char *contents;
-    enum Token token; 
-    struct list_head list;
-};
+// struct argument {
+//     char *contents;
+//     enum Token token; 
+//     struct list_head list;
+// };
 
 /**
  * @brief 
  * 
  */
-struct subcommand
-{
-  struct list_head list; // part of a list of subcommands
-  // struct argument *args; // a pointer to the head of arg_list
-  char **exec_args; // equivalent to lsargs in hw3
-  // enum command_type command; // internal environment, job internal, normal
-};
+// struct subcommand
+// {
+//   struct list_head list; // part of a list of subcommands
+//   // struct argument *args; // a pointer to the head of arg_list
+//   char **exec_args; // equivalent to lsargs in hw3
+//   // enum command_type command; // internal environment, job internal, normal
+// };
 
 /** Full line that is typed
  */
-struct commandline_t
-{
-  int num;           // Number of subcommands
-  char **subcommand; // 2d array of all subcommands
-};
+// struct commandline_t
+// {
+//   int num;           // Number of subcommands
+//   char **subcommand; // 2d array of all subcommands
+// };
 
 //Finds the number of subcommand in the input string and returns that value.
 int find_num_sentences(char input[], int len)
@@ -72,13 +72,13 @@ int find_num_sentences(char input[], int len)
 }
 
 //Copies an individual sentence to a pointer
-void copy_sentence(char **subcommand, char *sentence, int i)
+void copy_subcommand(char **subcommand, char *destination, int i)
 {
-  strcpy(subcommand[i], sentence);
+  strcpy(subcommand[i], destination);
 }
 
 //Copies all the subcommand from input into the array of pointers
-void copy_sentences(char input[], int num, char **subcommand)
+void copy_subcommands(char input[], int num, char **subcommand)
 {
   int i, len;
   char *sentence = strtok(input, "|");
@@ -89,20 +89,20 @@ void copy_sentences(char input[], int num, char **subcommand)
   {
     len = strlen(sentence);
     subcommand[i] = malloc(len + 2);
-    copy_sentence(subcommand, sentence, i);
+    copy_subcommand(subcommand, sentence, i);
 
     sentence = strtok(NULL, "|");
   }
 }
 
 //Prints the number of subcommand in input
-void print_num_sentences(int num)
+void print_num_subcommands(int num)
 {
   printf("num: %d\n", num);
 }
 
 //Prints the subcommand in the correct format
-void print_sentences(int num, char **sen)
+void print_subcommands(int num, char **sen)
 {
   int i = 0;
   for (i = 0; i < num; i++)
@@ -118,11 +118,11 @@ void print_sentences(int num, char **sen)
  */
 void clear_list(struct list_head *list)
 {
-  struct argument *entry; //Current entry  during traversal
+  argument *entry; //Current entry  during traversal
 
   while (!list_empty(list))
   {
-    entry = list_entry(list->next, struct argument, list);
+    entry = list_entry(list->next, argument, list);
     list_del(&entry->list);
     free(entry->contents);
     free(entry);
@@ -133,15 +133,15 @@ void clear_list(struct list_head *list)
  * Recurses through a given list_head struct's list,
  * and prints the contents to the console.
  */
-void displayList(struct list_head *todo_list)
+void displayList(struct list_head *list)
 {
-  struct list_head *start = todo_list->next; //Start at the first node after the head
-  struct list_head *curr;                    //Tracks current node during traversal
-  struct argument *entry;                    //Current nodes struct with contents
+  struct list_head *start = list->next; //Start at the first node after the head
+  struct list_head *curr; //Tracks current node during traversal
+  argument *entry; //Current nodes struct with contents
 
-  for (curr = todo_list->next; curr->next != start; curr = curr->next)
+  for (curr = list->next; curr->next != start; curr = curr->next)
   {
-    entry = list_entry(curr, struct argument, list);
+    entry = list_entry(curr, argument, list);
     printf("(%s), (%d)\n", entry->contents, entry->token);
   }
 }
@@ -156,7 +156,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
   int currentState = CHARACTER;
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
-  struct argument *arg;                   // Linked List
+  argument *arg;                   // Linked List
 
   for (int i = 0; i < commandline->num; i++)
   {
@@ -164,7 +164,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
     {
       if ((commandline->subcommand[i][j] != ' ' && commandline->subcommand[i][j] != '\t' && commandline->subcommand[i][j] != '"'))
       {
-        arg = malloc(sizeof(struct argument));
+        arg = malloc(sizeof(argument));
         if (commandline->subcommand[i][j] == '>')
         {
           if (commandline->subcommand[i][j + 1] == '>')
@@ -193,7 +193,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
         }
         else if (commandline->subcommand[i][j] == '<')
         {
-          arg = malloc(sizeof(struct argument));
+          arg = malloc(sizeof(argument));
           arg->token = REDIRECT_INPUT;
           strncat(temp, &commandline->subcommand[i][j], 1);
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
@@ -210,7 +210,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
           // if we found the last word, and it has no space after, add it to the list
           if (j == (strlen(commandline->subcommand[i]) - 1))
           {
-            arg = malloc(sizeof(struct argument));
+            arg = malloc(sizeof(argument));
             arg->contents = strdup(temp);
             arg->token = NORMAL;
             list_add_tail(&arg->list, list_args);
@@ -224,7 +224,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
         if (currentState != WHITESPACE)
         {
           currentState = WHITESPACE;
-          arg = malloc(sizeof(struct argument));
+          arg = malloc(sizeof(argument));
           arg->token = NORMAL;             // set token to normal
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
           list_add_tail(&arg->list, list_args); //add the argument to the list of args
@@ -244,7 +244,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
             j++;
           }
           arg->token = NORMAL; // set token to normal
-          arg = malloc(sizeof(struct argument));
+          arg = malloc(sizeof(argument));
           arg->contents = strdup(temp);    //store the last full word into contents of an argument
           list_add_tail(&arg->list, list_args); //add the argument to the list of args
           memset(temp, 0, 50);             //reset the temp word variable to blank
@@ -253,7 +253,7 @@ void stringExtract(struct list_head *list_args, commandline *commandline)
       }
     }
     //The req specify ending the list of arguements with a NULL for exec
-    arg = malloc(sizeof(struct argument));
+    arg = malloc(sizeof(argument));
     arg->contents = strdup("\0");
     arg->token = NORMAL;
     list_add_tail(&arg->list, list_args);

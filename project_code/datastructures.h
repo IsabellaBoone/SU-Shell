@@ -49,46 +49,92 @@ typedef struct Commandline {
   char **stdout; // would hold where the command outputs to 
 } commandline;
 
-// Functions related to navigating data structures
+typedef struct Subcommand
+{
+  struct list_head list; // part of a list of subcommands
+  // struct argument *args; // a pointer to the head of arg_list
+  char **exec_args; // equivalent to lsargs in hw3
+  // enum command_type command; // internal environment, job internal, normal
+} subcommand;
 
-//Finds the number of subcommand in the input string and returns that value. 
+
+/**
+ * Functions related to navigating data structures
+ */
+
+/**
+ * @brief Find the number of subcommands in the input string and returns that value. 
+ * 
+ * @param input String to search through
+ * @param len int length of String
+ * @return int number of subcommands found
+ */
 int find_num_sentences(char input[], int len);
 
-//Copies an individual sub-command to a pointer 
-void copy_sentence(char **subcommand, char *sentence, int i);
+/**
+ * @brief Copy an individual subcommand to a pointer
+ * 
+ * @param subcommand 2D char array to copy from.
+ * @param sentence char * destination to copy to
+ * @param i which sentence in subcommand to copy
+ */
+void copy_subcommand(char **subcommand, char *destination, int i);
 
-
-//Copies all the subcommand from input into the array of pointers 
-void copy_sentences(char input[], int num, char **subcommand);
+/**
+ * @brief Copy a String of subcommands into a 2D array of subcommands. 
+ * 
+ * @param input String to break apart
+ * @param num int number of subcommands in String
+ * @param subcommand 2D char array to copy subcommands into
+ */
+void copy_subcommands(char input[], int num, char **subcommand);
 
 
 //Prints the number of subcommand in input 
-void print_num_sentences(int num);
+/**
+ * @brief Print number of subcommands in the input
+ * 
+ * @param num int number of subcommands
+ */
+void print_num_subcommands(int num);
 
 
 //Prints the subcommand in the correct format 
-void print_sentences(int num, char **sen);
-
+/**
+ * @brief Print subcommand in correct form. 
+ * 
+ * @param num 
+ * @param sen 
+ */
+void print_subcommands(int num, char **sen);
 
 /**
- * Receives a linked list of our list_head struct.
- * The function will traverse through our linked list and
- * free it from memory after deleting each node entry.
+ * @brief Traverse through linked list and free it from memory
+ * after deleting each node entry. 
+ * 
+ * @param list struct list_head to clear
  */
 void clear_list(struct list_head *list);
 
-
 /**
- * Recurses through a given list_head struct's list,
- * and prints the contents to the console.
+ * @brief Navigate through list and print contents to console. 
+ * 
+ * @param list struct list_head to print
  */
-void displayList(struct list_head *todo_list);
+void displayList(struct list_head *list);
 
 
 /**
  * Take in the input string and length of the string as parameters.
  * Returns the amount of subcommand in the input string
 **/
+
+/**
+ * @brief Parse through a list of arguments character by character. 
+ * 
+ * @param list_args List of arguments to parse through
+ * @param commandline 
+ */
 void stringExtract(struct list_head *list_args, commandline *commandline);
 
 #endif
