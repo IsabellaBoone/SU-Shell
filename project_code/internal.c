@@ -11,7 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "parser.h"
+#include "datastructures.h"
 #include "list.h"
 #include "error.h"
 #include "environ.h"
@@ -45,7 +45,7 @@ void check_status(int status, char *command) {
  * @return char* The name of the internal command (first argument)
  */
 char * get_internal_command(struct list_head *subcommand) {
-  struct argument *entry = list_entry(subcommand->prev, struct argument, list); 
+  argument *entry = list_entry(subcommand->prev, argument, list); 
   return entry->contents; 
 }
 
@@ -57,7 +57,7 @@ char * get_internal_command(struct list_head *subcommand) {
  * @return char* The name of an environment variable or path (second argument)
  */
 char * get_second_argument(struct list_head *subcommand) {
-  struct argument *entry = list_entry(subcommand->prev->prev, struct argument, list); 
+  argument *entry = list_entry(subcommand->prev->prev, argument, list); 
   return entry->contents; 
 }
 
@@ -69,7 +69,7 @@ char * get_second_argument(struct list_head *subcommand) {
  * @return char* The value entered by the user (third argument) 
  */
 char * get_third_argument(struct list_head *subcommand) {
-  struct argument *entry = list_entry(subcommand->prev->prev->prev, struct argument, list); 
+  argument *entry = list_entry(subcommand->prev->prev->prev, argument, list); 
   return entry->contents; 
 }
 

@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "list.h"
+#include "datastructures.h"
 
 #define INPUT_LENGTH 4094
 
@@ -22,17 +23,6 @@ enum State
   INPUT
 };
 
-/**
- * @brief Token Enum for type of argument
- */
-enum Token
-{
-  REDIRECT_INPUT,
-  REDIRECT_OUTPUT_APPEND,
-  REDIRECT_OUTPUT_TRUNCATE,
-  NORMAL,
-  FILENAME
-};
 
 /** 
  * Main struct for the linked list.
@@ -160,7 +150,7 @@ void displayList(struct list_head *todo_list)
  * Take in the input string and length of the string as parameters.
  * Returns the amount of subcommand in the input string
 **/
-void stringExtract(struct list_head *list_args, struct commandline_t *commandline)
+void stringExtract(struct list_head *list_args, commandline *commandline)
 {
   int word_count = 0;
   int currentState = CHARACTER;

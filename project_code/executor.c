@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "parser.h"
+#include <stdlib.h> // for memory allocation
+#include <stdio.h> // for expert debugging
+#include "datastructures.h"
 #include "list.h"
 
 struct subcommand {
@@ -14,22 +16,22 @@ struct subcommand {
 
 void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
     struct list_head *curr;  
-    struct argument *entry; 
+    argument *entry; 
     subcommand->stdin = NULL; 
     subcommand->stdout = NULL; 
     
     for (curr = arg->next; curr != arg; curr = curr->next) {
-        entry = list_entry(curr, struct argument, list); 
+        entry = list_entry(curr, argument, list); 
         if (entry->token == REDIRECT_OUTPUT_APPEND) {
             subcommand->output_type = entry->token; 
-            entry = list_entry(curr->next, struct argument, list);
+            entry = list_entry(curr->next, argument, list);
             subcommand->stdout = strdup(entry->contents); 
 
             //Delete the current entry target and free from memory
             list_del(&entry->list); 
             free(entry);
 
-            entry = list_entry(curr, struct argument, list);
+            entry = list_entry(curr, argument, list);
             list_del(&entry->list); 
             free(entry);
 
@@ -38,7 +40,7 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
 
         } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
             subcommand->output_type = entry->token; 
-            entry = list_entry(curr->next, struct argument, list);
+            entry = list_entry(curr->next, argument, list);
             printf("1: (%s)\n", entry->contents);
             subcommand->stdout = strdup(entry->contents); 
 
@@ -46,7 +48,7 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
             list_del(&entry->list); 
             free(entry);
 
-            entry = list_entry(curr, struct argument, list);
+            entry = list_entry(curr, argument, list);
             printf("2: (%s)\n", entry->contents);
             list_del(&entry->list); 
             free(entry);
@@ -55,7 +57,7 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
             arg=curr;
             
         } else if (entry->token == REDIRECT_INPUT) {
-            entry = list_entry(curr->next, struct argument, list);
+            entry = list_entry(curr->next, argument, list);
             printf("1: (%s)\n", entry->contents);
             subcommand->stdin = strdup(entry->contents);
             
@@ -63,7 +65,7 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
             list_del(&entry->list); 
             free(entry);
             
-            entry = list_entry(curr, struct argument, list);
+            entry = list_entry(curr, argument, list);
             list_del(&entry->list); 
             free(entry);
 
@@ -82,11 +84,11 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
  */
 void makeArgumentList(struct list_head *list_args, char **args, int len) {
     struct list_head *curr;  
-    struct argument *entry; 
+    argument *entry; 
     int i = len - 1; 
     
     for (curr = list_args->next; curr != list_args; curr = curr->next) {
-        entry = list_entry(curr, struct argument, list); 
+        entry = list_entry(curr, argument, list); 
         args[i] = strndup(entry->contents, strlen(entry->contents)); 
         i--; 
     }
@@ -190,11 +192,11 @@ void run_command(int len, int subcommand_count, struct list_head *list_args) {
         
         //takes the linked list, and turns it into an array list that can be passed to exec
         struct list_head *curr;  
-        struct argument *entry; 
+        argument *entry; 
         int i = 0; 
         
         for (curr = list_args->next; curr != list_args; curr = curr->next) {
-            entry = list_entry(curr, struct argument, list); 
+            entry = list_entry(curr, argument, list); 
             exec_arg_list[i] = strndup(entry->contents, strlen(entry->contents)); 
             i++;
             if(strlen(entry->contents)==0){
