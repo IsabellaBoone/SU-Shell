@@ -17,50 +17,53 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
     struct argument *entry; 
     subcommand->stdin = NULL; 
     subcommand->stdout = NULL; 
-
+    
     for (curr = arg->next; curr != arg; curr = curr->next) {
         entry = list_entry(curr, struct argument, list); 
         if (entry->token == REDIRECT_OUTPUT_APPEND) {
             subcommand->output_type = entry->token; 
-            entry = list_entry(curr->prev, struct argument, list);
+            entry = list_entry(curr->next, struct argument, list);
             subcommand->stdout = strdup(entry->contents); 
-            //Move the current node ahead of our target to delete
-            curr=curr->next;
+
             //Delete the current entry target and free from memory
             list_del(&entry->list); 
             free(entry);
 
-            entry = list_entry(curr->prev, struct argument, list);
+            entry = list_entry(curr, struct argument, list);
             list_del(&entry->list); 
             free(entry);
+
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
+
         } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
             subcommand->output_type = entry->token; 
-            entry = list_entry(curr->prev, struct argument, list);
+            entry = list_entry(curr->next, struct argument, list);
+            printf("1: (%s)\n", entry->contents);
             subcommand->stdout = strdup(entry->contents); 
-            //Move the current node ahead of our target to delete
-            curr=curr->next;
+
             //Delete the current entry target and free from memory
             list_del(&entry->list); 
             free(entry);
 
-            entry = list_entry(curr->prev, struct argument, list);
+            entry = list_entry(curr, struct argument, list);
+            printf("2: (%s)\n", entry->contents);
             list_del(&entry->list); 
             free(entry);
 
             //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
             arg=curr;
+            
         } else if (entry->token == REDIRECT_INPUT) {
-            entry = list_entry(curr->prev, struct argument, list);
+            entry = list_entry(curr->next, struct argument, list);
+            printf("1: (%s)\n", entry->contents);
             subcommand->stdin = strdup(entry->contents);
-            //Move the current node ahead of our target to delete
-            curr=curr->next;
+            
             //Delete the current entry target and free from memory
             list_del(&entry->list); 
             free(entry);
-
-            entry = list_entry(curr->prev, struct argument, list);
+            
+            entry = list_entry(curr, struct argument, list);
             list_del(&entry->list); 
             free(entry);
 
@@ -180,7 +183,7 @@ void run_command(int len, int subcommand_count, struct list_head *list_args) {
     struct subcommand subcmd; 
     get_input_output(list_args, &subcmd);  
     int new_length = getListLength(list_args); 
-
+    displayList(list_args);
     if(subcommand_count>=1){
         //initializes an array of character pointers that will be passed to exec()
         char **exec_arg_list = malloc(new_length * sizeof(char *)); 
