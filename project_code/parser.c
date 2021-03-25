@@ -156,7 +156,7 @@ void display_list(struct list_head *list)
 void parse_commandline(struct list_head *list_args, commandline *commandline)
 {
   int word_count = 0; // 
-  int currentState = CHARACTER; // Start in character state by default
+  int currentState = WHITESPACE; // Start in whitespace state by default
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
   argument *arg; // Linked List of arguments
