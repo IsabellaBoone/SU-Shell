@@ -29,6 +29,7 @@ enum State
   CHARACTER,
   QUOTE,
   OUTPUT,
+  REDIR,
   INPUT
 };
 
@@ -153,9 +154,68 @@ void display_list(struct list_head *list)
 }
 
 
+
+
+int is_whitespace(char c){
+  if(c == SPACE || c == TAB){
+    return 1;
+  }
+
+  return 0;
+}
+
+
+int is_quote(char c){
+  if(c == QUOTATIONMARK){
+    return 1;
+  }
+
+  return 0;
+}
+
+int is_redir(char c){
+  if(c == REDIR_IN || c == REDIR_OUT ){
+    return 1;
+  }
+
+  return 0;
+}
+
+
+/**
+ * Receives an individual character, and checks to ensure
+ * the character is not a space, tab, or quote.
+ * 
+ * If it is not, return 1 for true (is a char),
+ * else return 0 (not a char).
+**/
+int is_character(char c){
+  if(!is_redir(c) && !is_whitespace(c) && !is_quote(c)){
+    printf("%c\n", c);
+    return 1;
+  }
+
+  return 0;
+}
+
+
+int check_character(char c){
+  if(is_character(c)){
+    return CHARACTER;
+  }else if(is_whitespace(c)){
+    return WHITESPACE;
+  }else if(is_quote(c)){
+    return QUOTE;
+  }else if(is_redir(c)){
+    return REDIR;
+  }
+}
+
+
+
 void parse_commandline(struct list_head *list_args, commandline *commandline)
 {
-  int word_count = 0; // 
+  int word_count = 0; //Count for how many words we have parsed out of the commandline sentences
   int currentState = WHITESPACE; // Start in whitespace state by default
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
@@ -167,9 +227,10 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
     // For every character in the subcommand
     for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
       char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
+      int current_characters_state = check_character(current_character);  //check for the current_characters type
 
       // If the current char is not a space, tab, or quotation mark
-      if ((current_character != SPACE && current_character != TAB && current_character != QUOTATIONMARK)) {
+      if (current_characters_state == CHARACTER || current_characters_state == REDIR) {
         arg = malloc(sizeof(argument)); 
         // If we encounter redirect symbol
         if (current_character == REDIR_IN) {
@@ -213,7 +274,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
             memset(temp, 0, 50);
           }
         } 
-      } else if (current_character == SPACE || current_character == TAB) {
+      } else if (current_characters_state == WHITESPACE) {
         // If we see a space or tab
         if (currentState != WHITESPACE) {
           currentState = WHITESPACE;
@@ -224,7 +285,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
           word_count++;                    //increment which word we are on
           memset(temp, 0, 50);             //reset the temp word variable to blank
         }
-      } else if (current_character == QUOTATIONMARK) {
+      } else if (current_characters_state == QUOTE) {
         if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
