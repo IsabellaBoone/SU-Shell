@@ -19,6 +19,10 @@
 #include <string.h> // for strings
 #include "list.h" // for navigating lists
 
+/**
+ * @brief Enum to describe what type of argument is held. 
+ * 
+ */
 enum Token
 {
   REDIRECT_INPUT,
@@ -28,39 +32,48 @@ enum Token
   FILENAME
 };
 
-
 /**
- * Main struct for the linked list.
- * Contains the type of user input(list or dashed), the contents  (the input),
- * and the recursive list.
+ * @brief Struct to hold individual arguments in a subcommand. 
+ * 
+ * @param contents the input
+ * @param Token enum to describe what type of argument we have
+ * @param list_head list to navigate through, linking to next and prev argument
  */
 typedef struct Argument {
-    char *contents;
+    char *contents; // Contents
     enum Token token; 
     struct list_head list;
 } argument; 
 
-/** Full line that is typed
+
+/**
+ * @brief Commandline - the full line of input from the user
+ * 
+ * @param num int number of subcommands
+ * @param subcommand 2D char array of all subcommands
+ * @param stdin 2D char array to hold where input of the function comes from
+ * @param stdout 2D char array to hold where the command outputs to
  */
 typedef struct Commandline {
-  int num; // Number of subcommands
-  char **subcommand; // 2d array of all subcommands
-  char **stdin; // would hold where the input of the function comes from 
-  char **stdout; // would hold where the command outputs to 
+  int num; 
+  char **subcommand; 
+  char **stdin;
+  char **stdout; 
 } commandline;
 
+/**
+ * @brief A subcommand
+ * 
+ * @param list_head part of a list of subcommands
+ * @param exec_args 2D char array of arguments
+ */
 typedef struct Subcommand
 {
   struct list_head list; // part of a list of subcommands
-  // struct argument *args; // a pointer to the head of arg_list
   char **exec_args; // equivalent to lsargs in hw3
+  // struct argument *args; // a pointer to the head of arg_list
   // enum command_type command; // internal environment, job internal, normal
 } subcommand;
-
-
-/**
- * Functions related to navigating data structures
- */
 
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
@@ -89,8 +102,6 @@ void copy_subcommand(char **subcommand, char *destination, int i);
  */
 void copy_subcommands(char input[], int num, char **subcommand);
 
-
-//Prints the number of subcommand in input 
 /**
  * @brief Print number of subcommands in the input
  * 
@@ -99,14 +110,13 @@ void copy_subcommands(char input[], int num, char **subcommand);
 void print_num_subcommands(int num);
 
 
-//Prints the subcommand in the correct format 
 /**
  * @brief Print subcommand in correct form. 
  * 
- * @param num 
- * @param sen 
+ * @param num number of commands in subcommands
+ * @param subcommands 2D char array of subcommands to print 
  */
-void print_subcommands(int num, char **sen);
+void print_subcommands(int num, char **subcommands);
 
 /**
  * @brief Traverse through linked list and free it from memory
@@ -121,20 +131,14 @@ void clear_list(struct list_head *list);
  * 
  * @param list struct list_head to print
  */
-void displayList(struct list_head *list);
-
-
-/**
- * Take in the input string and length of the string as parameters.
- * Returns the amount of subcommand in the input string
-**/
+void display_list(struct list_head *list);
 
 /**
  * @brief Parse through a list of arguments character by character. 
  * 
  * @param list_args List of arguments to parse through
- * @param commandline 
+ * @param commandline to be parsed through
  */
-void stringExtract(struct list_head *list_args, commandline *commandline);
+void parse_commandline(struct list_head *list_args, commandline *commandline);
 
 #endif

@@ -185,7 +185,7 @@ void run_command(int len, int subcommand_count, struct list_head *list_args) {
     struct subcommand subcmd; 
     get_input_output(list_args, &subcmd);  
     int new_length = getListLength(list_args); 
-    displayList(list_args);
+    display_list(list_args);
     if(subcommand_count>=1){
         //initializes an array of character pointers that will be passed to exec()
         char **exec_arg_list = malloc(new_length * sizeof(char *)); 

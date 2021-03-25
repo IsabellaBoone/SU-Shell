@@ -49,9 +49,9 @@ int main(int argc, char **argv) {
             //print_num_sentences(sentence_info.num);
             print_subcommands(cmdline.num, cmdline.subcommand); 
 
-            stringExtract(&list_args, &cmdline);
+            parse_commandline(&list_args, &cmdline);
 
-            displayList(&list_args); 
+            display_list(&list_args); 
         }
 
         //Testing for the internal commands: 

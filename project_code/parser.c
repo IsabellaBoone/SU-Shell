@@ -8,11 +8,14 @@
 #include "list.h"
 #include "datastructures.h"
 
-#define INPUT_LENGTH 4094
+#define SPACE ' '
+#define TAB '\t'
+#define NEWLINE '\n'
+#define QUOTATIONMARK '"'
+#define PIPE '|'
 
 /**
  * @brief Current state on parser 
- * 
  */
 enum State
 {
@@ -23,46 +26,20 @@ enum State
   INPUT
 };
 
-
-/** 
- * Main struct for the linked list.
- * Contains the type of user input(list or dashed), the contents  (the input),
- * and the recursive list.
- */
-// struct argument {
-//     char *contents;
-//     enum Token token; 
-//     struct list_head list;
-// };
-
 /**
- * @brief 
+ * @brief Find the number of subcommands in the input string and returns that value. 
  * 
+ * @param input String to search through
+ * @param len int length of String
+ * @return int number of subcommands found
  */
-// struct subcommand
-// {
-//   struct list_head list; // part of a list of subcommands
-//   // struct argument *args; // a pointer to the head of arg_list
-//   char **exec_args; // equivalent to lsargs in hw3
-//   // enum command_type command; // internal environment, job internal, normal
-// };
-
-/** Full line that is typed
- */
-// struct commandline_t
-// {
-//   int num;           // Number of subcommands
-//   char **subcommand; // 2d array of all subcommands
-// };
-
-//Finds the number of subcommand in the input string and returns that value.
 int find_num_sentences(char input[], int len)
 {
   int i, count = 1;
 
   for (i = 0; i < len; i++)
   {
-    if (input[i] == '|')
+    if (input[i] == PIPE)
     {
       count++;
     }
@@ -71,13 +48,25 @@ int find_num_sentences(char input[], int len)
   return count;
 }
 
-//Copies an individual sentence to a pointer
+/**
+ * @brief Copy an individual subcommand to a pointer
+ * 
+ * @param subcommand 2D char array to copy from.
+ * @param sentence char * destination to copy to
+ * @param i which sentence in subcommand to copy
+ */
 void copy_subcommand(char **subcommand, char *destination, int i)
 {
   strcpy(subcommand[i], destination);
 }
 
-//Copies all the subcommand from input into the array of pointers
+/**
+ * @brief Copy a String of subcommands into a 2D array of subcommands. 
+ * 
+ * @param input String to break apart
+ * @param num int number of subcommands in String
+ * @param subcommand 2D char array to copy subcommands into
+ */
 void copy_subcommands(char input[], int num, char **subcommand)
 {
   int i, len;
@@ -95,26 +84,36 @@ void copy_subcommands(char input[], int num, char **subcommand)
   }
 }
 
-//Prints the number of subcommand in input
+/**
+ * @brief Print number of subcommands in the input
+ * 
+ * @param num int number of subcommands
+ */
 void print_num_subcommands(int num)
 {
   printf("num: %d\n", num);
 }
 
-//Prints the subcommand in the correct format
-void print_subcommands(int num, char **sen)
+/**
+ * @brief Print subcommand in correct form. 
+ * 
+ * @param num number of commands in subcommands
+ * @param subcommands 2D char array of subcommands to print 
+ */
+void print_subcommands(int num, char **subcommands)
 {
   int i = 0;
   for (i = 0; i < num; i++)
   {
-    printf("%d : (%s)\n", i, sen[i]);
+    printf("%d : (%s)\n", i, subcommands[i]);
   }
 }
 
 /**
- * Receives a linked list of our list_head struct.
- * The function will traverse through our linked list and
- * free it from memory after deleting each node entry.
+ * @brief Traverse through linked list and free it from memory
+ * after deleting each node entry. 
+ * 
+ * @param list struct list_head to clear
  */
 void clear_list(struct list_head *list)
 {
@@ -130,10 +129,11 @@ void clear_list(struct list_head *list)
 }
 
 /**
- * Recurses through a given list_head struct's list,
- * and prints the contents to the console.
+ * @brief Navigate through list and print contents to console. 
+ * 
+ * @param list struct list_head to print
  */
-void displayList(struct list_head *list)
+void display_list(struct list_head *list)
 {
   struct list_head *start = list->next; //Start at the first node after the head
   struct list_head *curr; //Tracks current node during traversal
@@ -147,10 +147,12 @@ void displayList(struct list_head *list)
 }
 
 /**
- * Take in the input string and length of the string as parameters.
- * Returns the amount of subcommand in the input string
-**/
-void stringExtract(struct list_head *list_args, commandline *commandline)
+ * @brief Parse through a list of arguments character by character. 
+ * 
+ * @param list_args List of arguments to parse through
+ * @param commandline to be parsed through
+ */
+void parse_commandline(struct list_head *list_args, commandline *commandline)
 {
   int word_count = 0;
   int currentState = CHARACTER;
