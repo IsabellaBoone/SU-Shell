@@ -29,8 +29,11 @@ int main(int argc, char **argv) {
     commandline cmdline;
     LIST_HEAD(list_args); 
     char input[INPUT_LENGTH]; 
+    setenv("PS1", ">", 1); 
 
     while(1){
+        printf("%s", getenv("PS1"));
+        fflush(stdout); 
         fgets(input, INPUT_LENGTH, stdin); 
 
         //printf("Before: %d", input);

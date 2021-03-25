@@ -45,7 +45,7 @@ void check_status(int status, char *command) {
  * @return char* The name of the internal command (first argument)
  */
 char * get_internal_command(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->prev, argument, list); 
+  struct argument *entry = list_entry(subcommand->next, struct argument, list); 
   return entry->contents; 
 }
 
@@ -57,7 +57,7 @@ char * get_internal_command(struct list_head *subcommand) {
  * @return char* The name of an environment variable or path (second argument)
  */
 char * get_second_argument(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->prev->prev, argument, list); 
+  struct argument *entry = list_entry(subcommand->next->next, struct argument, list); 
   return entry->contents; 
 }
 
@@ -69,7 +69,7 @@ char * get_second_argument(struct list_head *subcommand) {
  * @return char* The value entered by the user (third argument) 
  */
 char * get_third_argument(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->prev->prev->prev, argument, list); 
+  struct argument *entry = list_entry(subcommand->next->next->next, struct argument, list); 
   return entry->contents; 
 }
 
