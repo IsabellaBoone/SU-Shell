@@ -33,6 +33,8 @@ enum State
   INPUT
 };
 
+
+
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
  * 
@@ -40,7 +42,7 @@ enum State
  * @param len int length of String
  * @return int number of subcommands found
  */
-int find_num_sentences(char input[], int len)
+int find_num_subcommands(char input[], int len)
 {
   int i, count = 1;
 
@@ -122,7 +124,7 @@ void print_subcommands(int num, char **subcommands)
  * 
  * @param list struct list_head to clear
  */
-void clear_list(struct list_head *list)
+void clear_list_argument(struct list_head *list)
 {
   argument *entry; //Current entry  during traversal
 
@@ -136,7 +138,7 @@ void clear_list(struct list_head *list)
 }
 
 /**
- * @brief Navigate through list and print contents to console. 
+ * @brief Navigate through list_args and print contents to console. 
  * 
  * @param list struct list_head to print
  */
@@ -152,9 +154,6 @@ void display_list(struct list_head *list)
     printf("(%s), (%d)\n", entry->contents, entry->token);
   }
 }
-
-
-
 
 int is_whitespace(char c){
   if(c == SPACE || c == TAB){
@@ -211,9 +210,118 @@ int check_character_state(char c){
   }
 }
 
+/**
+ * @brief Takes in the arg list, sets the input, output, and type for the subcommand. 
+ * Also removes any filesnames or redirects from the list_args so it can be processed 
+ * and made into an array for exec. 
+ * 
+ * @param arg The list of args from the command line. Will look like "ls", "-l", "\0"
+ * @param subcommand The sub command of the commandline that is being "filled" in 
+ */
+static void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
+    struct list_head *curr;  
+    argument *entry; 
+    //Assigns default values to the struct 
+    subcommand->input = strdup("stdin");    
+    subcommand->output = strdup("stdout"); 
+    subcommand->type = NORMAL; 
+    
+    for (curr = arg->next; curr != arg; curr = curr->next) {
+        entry = list_entry(curr, argument, list); 
+        if (entry->token == REDIRECT_OUTPUT_APPEND) {
+            subcommand->type = entry->token; 
+            entry = list_entry(curr->next, argument, list);
+            subcommand->output = strdup(entry->contents); 
+
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+
+            entry = list_entry(curr, argument, list);
+            list_del(&entry->list); 
+            free(entry);
+
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
+
+        } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
+            subcommand->type = entry->token; 
+            entry = list_entry(curr->next, argument, list);
+            printf("1: (%s)\n", entry->contents);
+            subcommand->output = strdup(entry->contents); 
+
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+
+            entry = list_entry(curr, argument, list);
+            printf("2: (%s)\n", entry->contents);
+            list_del(&entry->list); 
+            free(entry);
+
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
+            
+        } else if (entry->token == REDIRECT_INPUT) {
+            entry = list_entry(curr->next, argument, list);
+            printf("1: (%s)\n", entry->contents);
+            subcommand->input = strdup(entry->contents);
+            
+            //Delete the current entry target and free from memory
+            list_del(&entry->list); 
+            free(entry);
+            
+            entry = list_entry(curr, argument, list);
+            list_del(&entry->list); 
+            free(entry);
+
+            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+            arg=curr;
+        }
+    }
+}
+
+/**
+ * @brief Takes the remaining arguments of list_args and stores them as a 2D array
+ * in subcommand. 
+ * 
+ * @param list_args The list of args that is being placed in an array 
+ * @param sub The subcommand of the commandline that the array belongs to
+ */
+static void make_exec_args_array(struct list_head *list_args, struct subcommand *sub) {
+  int num_args = getListLength(list_args); 
+  sub->exec_args = malloc(num_args * sizeof(char *)); 
+  //loop through args list and assign exec_args[i] the value of contents
+  struct list_head *curr;  
+  argument *entry; 
+  int i = 0; 
+    
+  for (curr = list_args->next; curr != list_args; curr = curr->next) {
+      entry = list_entry(curr, argument, list); 
+      sub->exec_args[i] = strndup(entry->contents, strlen(entry->contents)); 
+      i++; 
+  }
+  sub->exec_args[num_args-1] = NULL; 
+
+}
+
+/**
+ * @brief Constructs a struct that holds information about the individual subcommand of 
+ * from the command line. The subcommand is added to a list of commands, which represents the entire 
+ * command line. 
+ * 
+ * @param list_commands The list which the subcommand will be added to
+ * @param list_args The parsed argument list that is being turned into a subcommand. 
+ */
+static void make_subcommand(struct list_head *list_commands, struct list_head *list_args) {
+  struct subcommand *sub = malloc(sizeof(struct subcommand)); 
+  get_input_output(list_args, sub); //fills in the struct fields: input, output, type
+  make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
+  list_add_tail(&sub->list, list_commands); 
+}
 
 
-void parse_commandline(struct list_head *list_args, commandline *commandline)
+void parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands)
 {
   int word_count = 0; //Count for how many words we have parsed out of the commandline sentences
   int currentState = WHITESPACE; // Start in whitespace state by default
@@ -308,9 +416,12 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
     arg->contents = strdup("\0");
     arg->token = NORMAL;
     list_add_tail(&arg->list, list_args);
+
+    //Makes a subcomamnd, then clears the list_args so that more args can be scanned
+    //at this point list_args == "ls" "-l" "\0" 
+    make_subcommand(list_commands, list_args); 
+    clear_list_argument(list_args); 
   }
-
-
   free(temp);
 }
 

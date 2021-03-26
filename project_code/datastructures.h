@@ -57,9 +57,19 @@ typedef struct Argument {
 typedef struct Commandline {
   int num; 
   char **subcommand; 
-  char **stdin;
-  char **stdout; 
 } commandline;
+
+/**
+ * @brief subcommand - a sub command from the full commandline (sub commands are split at the pipes)
+ * 
+ */
+struct subcommand {
+    char **exec_args; 
+    char *input; 
+    char *output; 
+    enum Token type; 
+    struct list_head list; 
+}; 
 
 /**
  * @brief A subcommand
@@ -67,13 +77,13 @@ typedef struct Commandline {
  * @param list_head part of a list of subcommands
  * @param exec_args 2D char array of arguments
  */
-typedef struct Subcommand
-{
-  struct list_head list; // part of a list of subcommands
-  char **exec_args; // equivalent to lsargs in hw3
-  // struct argument *args; // a pointer to the head of arg_list
-  // enum command_type command; // internal environment, job internal, normal
-} subcommand;
+// typedef struct Subcommand
+// {
+//   struct list_head list; // part of a list of subcommands
+//   char **exec_args; // equivalent to lsargs in hw3
+//   // struct argument *args; // a pointer to the head of arg_list
+//   // enum command_type command; // internal environment, job internal, normal
+// } subcommand;
 
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
@@ -82,7 +92,7 @@ typedef struct Subcommand
  * @param len int length of String
  * @return int number of subcommands found
  */
-int find_num_sentences(char input[], int len);
+int find_num_subcommands(char input[], int len);
 
 /**
  * @brief Copy an individual subcommand to a pointer
@@ -124,7 +134,7 @@ void print_subcommands(int num, char **subcommands);
  * 
  * @param list struct list_head to clear
  */
-void clear_list(struct list_head *list);
+void clear_list_argument(struct list_head *list);
 
 /**
  * @brief Navigate through list and print contents to console. 
@@ -139,6 +149,6 @@ void display_list(struct list_head *list);
  * @param list_args List of arguments to parse through
  * @param commandline to be parsed through
  */
-void parse_commandline(struct list_head *list_args, commandline *commandline);
+void parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands);
 
 #endif

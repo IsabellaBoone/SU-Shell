@@ -8,13 +8,14 @@
 #include "datastructures.h"
 #include "list.h"
 
-struct subcommand {
-    char *stdin; 
-    char *stdout; 
-    enum Token output_type; 
-}; 
+// struct subcommand {
+//     char *stdin; 
+//     char *stdout; 
+//     enum Token output_type; 
+// }; 
 
-void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
+/*
+void get_input_output_old(struct list_head *arg, struct subcommand *subcommand) {
     struct list_head *curr;  
     argument *entry; 
     subcommand->stdin = NULL; 
@@ -75,13 +76,14 @@ void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
     }
 }
 
+
 /**
  * @brief makes a list of arguments
  * 
  * @param 
  * @param list The list that will be turned into an array of characetr pointers 
  * @return char* Returns a list of arguments in the char **args
- */
+ *
 void makeArgumentList(struct list_head *list_args, char **args, int len) {
     struct list_head *curr;  
     argument *entry; 
@@ -107,7 +109,7 @@ void makeArgumentList(struct list_head *list_args, char **args, int len) {
  * 
  * @param args The malloced array of char pointers being freed
  * @param len The length of the list being freed 
- */
+ *
 void free_exec_arg_list(char **args, int len) {
     int i; 
     for (i = 0; i < len; i++) {
@@ -122,7 +124,7 @@ void free_exec_arg_list(char **args, int len) {
  * 
  * @param command The type of command being executed 
  * @param args The list of args sent to exec 
- */
+ *
 void handleChildInExecutor(char *command, char *const *args) {
     execvp(command, args); 
     perror("The process failed to execute"); //Should we handle an error here if we are unable to 
@@ -134,7 +136,7 @@ void handleChildInExecutor(char *command, char *const *args) {
  * 
  * @param pid The process id
  * @param option The option passed to waitpid 
- */
+ *
 void handleParentInExecutor(pid_t pid, int option) {
     int status; 
     waitpid(pid, &status, option); 
@@ -145,7 +147,7 @@ void handleParentInExecutor(pid_t pid, int option) {
  * 
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
- */
+ *
 void execute(char *command, char *const *args, struct subcommand *subcmd) {
     pid_t pid = fork(); 
 
@@ -179,11 +181,11 @@ void execute(char *command, char *const *args, struct subcommand *subcmd) {
  * 
  * @param len The length of the linked list 
  * @param list_args The linked list of args that are being executed 
- */
+ *
 void run_command(int len, int subcommand_count, struct list_head *list_args) {
 
     struct subcommand subcmd; 
-    get_input_output(list_args, &subcmd);  
+    get_input_output_old(list_args, &subcmd);  
     int new_length = getListLength(list_args); 
     display_list(list_args);
     if(subcommand_count>=1){
@@ -226,3 +228,4 @@ void run_command(int len, int subcommand_count, struct list_head *list_args) {
     // free_exec_arg_list(exec_arg_list, new_length); 
     //free(subcmd); 
 }
+*/
