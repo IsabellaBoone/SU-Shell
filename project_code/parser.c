@@ -15,8 +15,8 @@
 #define NEWLINE '\n'
 #define QUOTATIONMARK '"'
 #define PIPE '|'
-#define REDIR_IN '>'
-#define REDIR_OUT '<'
+#define REDIR_IN '<'
+#define REDIR_OUT '>'
 
 
 /**
@@ -199,7 +199,7 @@ int is_character(char c){
 }
 
 
-int check_character(char c){
+int check_character_state(char c){
   if(is_character(c)){
     return CHARACTER;
   }else if(is_whitespace(c)){
@@ -227,7 +227,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
     // For every character in the subcommand
     for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
       char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
-      int current_characters_state = check_character(current_character);  //check for the current_characters type
+      int current_characters_state = check_character_state(current_character);  //check for the current_characters type
 
       // If the current char is not a space, tab, or quotation mark
       if (current_characters_state == CHARACTER || current_characters_state == REDIR) {
