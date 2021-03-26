@@ -233,9 +233,9 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
       if (current_characters_state == CHARACTER || current_characters_state == REDIR) {
         arg = malloc(sizeof(argument)); 
         // If we encounter redirect symbol
-        if (current_character == REDIR_IN) {
+        if (current_character == REDIR_OUT) {
           // If we encounter two redir_in symbols ">>"
-          if (commandline->subcommand[i][j + 1] == REDIR_IN) {
+          if (commandline->subcommand[i][j + 1] == REDIR_OUT) {
             arg->token = REDIRECT_OUTPUT_APPEND; // Set token to redirect + append
             strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
           } else {
@@ -252,7 +252,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline)
           if (arg->token == REDIRECT_OUTPUT_APPEND) {
             j++;
           }
-        } else if (current_character == REDIR_OUT) {
+        } else if (current_character == REDIR_IN) {
           // If we encounter the redirect output symbol
           arg = malloc(sizeof(argument)); 
           arg->token = REDIRECT_INPUT; // Set token to redirect input 
