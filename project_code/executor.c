@@ -117,14 +117,14 @@ void free_exec_arg_list(char **args, int len) {
     }
     free(args); 
 
-}
+}*/
 
 /**
  * @brief Handles the execution of the child process 
  * 
  * @param command The type of command being executed 
  * @param args The list of args sent to exec 
- *
+ */
 void handleChildInExecutor(char *command, char *const *args) {
     execvp(command, args); 
     perror("The process failed to execute"); //Should we handle an error here if we are unable to 
@@ -136,10 +136,29 @@ void handleChildInExecutor(char *command, char *const *args) {
  * 
  * @param pid The process id
  * @param option The option passed to waitpid 
- *
+ */
 void handleParentInExecutor(pid_t pid, int option) {
     int status; 
     waitpid(pid, &status, option); 
+}
+
+void handle_input_output(struct subcommand *subcmd) {
+    if (strcmp(subcmd->output, "stdout") != 0) {
+        const char *filename = subcmd->output; 
+        int fd = 0; 
+        if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) {
+            fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
+        } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) {
+            fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
+        }
+        close(STDOUT_FILENO); //closes stdout 
+        dup2(fd, STDOUT_FILENO); 
+    } if (strcmp(subcmd->input, "stdin") != 0) {
+        const char *filename = subcmd->input; 
+        int fd = open(filename, O_RDONLY);
+        close(STDIN_FILENO);  
+        dup2(fd, STDIN_FILENO); 
+    }
 }
 
 /**
@@ -147,29 +166,13 @@ void handleParentInExecutor(pid_t pid, int option) {
  * 
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
- *
+ */
 void execute(char *command, char *const *args, struct subcommand *subcmd) {
     pid_t pid = fork(); 
 
     if (pid == 0) { //Child process 
         //if there is output
-        if (subcmd->stdout != NULL) {
-            const char *filename = subcmd->stdout; 
-            int fd = 0; 
-            if (subcmd->output_type == REDIRECT_OUTPUT_TRUNCATE) {
-                fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
-            } else if (subcmd->output_type == REDIRECT_OUTPUT_APPEND) {
-                fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
-            }
-            close(STDOUT_FILENO); //closes stdout 
-            dup2(fd, STDOUT_FILENO); 
-        } 
-        if (subcmd->stdin != NULL) {
-            const char *filename = subcmd->stdin; 
-            int fd = open(filename, O_RDONLY);
-            close(STDIN_FILENO);  
-            dup2(fd, STDIN_FILENO); 
-        }
+        handle_input_output(subcmd); 
         handleChildInExecutor(command, args); 
     } else {  //Parent process 
         handleParentInExecutor(pid, 0); 
@@ -181,51 +184,34 @@ void execute(char *command, char *const *args, struct subcommand *subcmd) {
  * 
  * @param len The length of the linked list 
  * @param list_args The linked list of args that are being executed 
- *
-void run_command(int len, int subcommand_count, struct list_head *list_args) {
+ */
+void run_command(int len, int subcommand_count, struct list_head *list_commands) {
+    printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
+    struct subcommand *entry; 
+    // struct subcommand subcmd; 
+    // get_input_output_old(list_args, &subcmd);  
+    // int new_length = getListLength(list_args); 
+    // display_list(list_args);
 
-    struct subcommand subcmd; 
-    get_input_output_old(list_args, &subcmd);  
-    int new_length = getListLength(list_args); 
-    display_list(list_args);
     if(subcommand_count>=1){
-        //initializes an array of character pointers that will be passed to exec()
-        char **exec_arg_list = malloc(new_length * sizeof(char *)); 
+        // //initializes an array of character pointers that will be passed to exec()
+        // char **exec_arg_list = malloc(new_length * sizeof(char *)); 
         
-        //takes the linked list, and turns it into an array list that can be passed to exec
+        //Loops through each subcommand and executes
         struct list_head *curr;  
-        argument *entry; 
-        int i = 0; 
         
-        for (curr = list_args->next; curr != list_args; curr = curr->next) {
-            entry = list_entry(curr, argument, list); 
-            exec_arg_list[i] = strndup(entry->contents, strlen(entry->contents)); 
-            i++;
-            if(strlen(entry->contents)==0){
-                // printf("i=%d\n", i);
-                // printf("len-1=%d\n", len-1);
-                // need to manually set the last argument to NULL, even though it is in linked list
-                //may want to just not add null on the linked list 
-                exec_arg_list[i-1] = NULL; 
-                char *command = calloc((new_length + strlen(exec_arg_list[0])),  sizeof(char));
+        for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
+            //Looks at one subcommand 
+            entry = list_entry(curr, struct subcommand, list); 
+            char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
 
-                // command becomes: /bin/<command> 
-                strcpy(command, "/bin/"); 
-                strcat(command, exec_arg_list[0]); 
+            // command becomes: /bin/<command> 
+            strcpy(command, "/bin/"); 
+            strcat(command, entry->exec_args[0]); 
 
-                // executes a basic command
-                execute(command, exec_arg_list, &subcmd);
-                memset(command, 0, sizeof(command));
-                memset(exec_arg_list, 0, sizeof(exec_arg_list));
-                i=0;
-            }
+            // executes a basic command
+            execute(command, entry->exec_args, entry);
+            free(command); 
         }
     }
-     
-
-    // frees the argument list
-    // free(command);
-    // free_exec_arg_list(exec_arg_list, new_length); 
-    //free(subcmd); 
 }
-*/

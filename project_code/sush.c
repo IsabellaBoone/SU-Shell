@@ -22,16 +22,16 @@
 
 void clear_list_command(struct list_head *list) {
     struct subcommand *entry; 
-
+    
     while (!list_empty(list)) {
-        entry = list_entry(list->next, struct subcommand, list); 
-        list_del(&entry->list); 
+        entry = list_entry(list->next, struct subcommand, list);  
+        list_del(&entry->list);
         //free 2D array
-        int i = 0; 
+        int i = 0;
         while (entry->exec_args[i] != NULL) {
             free(entry->exec_args[i]); //free array elements
+            i++; 
         }
-        free(entry->exec_args[i]); //free NULL
         free(entry->exec_args); //free array
 
         free(entry->input); 
@@ -85,9 +85,9 @@ int main(int argc, char **argv, char **envp) {
         // printf("%d\n", internal_code);
         // if(internal_code == 1){
         //     //finds the length of the list, used to allocate space for the array of character pointers 
-        //     int list_len = getListLength(&list_args); 
+               int list_len = getListLength(&list_commands); 
         //     // displayList(&list_args);
-        //     run_command(list_len, cmdline.num, &list_args); 
+                run_command(list_len, cmdline.num, &list_commands); 
         // }else if( internal_code == -1){
         //     printf("Error has occured");
         // }
@@ -99,9 +99,8 @@ int main(int argc, char **argv, char **envp) {
             free(cmdline.subcommand[i]);
         }
         free(cmdline.subcommand);
- 
-        clear_list_argument(&list_args); 
-        
+    
+        clear_list_argument(&list_args);  
         clear_list_command(&list_commands); 
     }
 

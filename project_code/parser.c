@@ -296,7 +296,7 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
   argument *entry; 
   int i = 0; 
     
-  for (curr = list_args->next; curr != list_args; curr = curr->next) {
+  for (curr = list_args->next; curr != list_args->prev; curr = curr->next) {
       entry = list_entry(curr, argument, list); 
       sub->exec_args[i] = strndup(entry->contents, strlen(entry->contents)); 
       i++; 

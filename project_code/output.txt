@@ -1,0 +1,18 @@
+total 156
+-rw-r--r-- 1 hannah13mo hannah13mo   142 Mar 25 12:03 Makefile
+-rw-r--r-- 1 hannah13mo hannah13mo  3953 Mar 26 17:11 datastructures.h
+-rw-r--r-- 1 hannah13mo hannah13mo  5846 Mar 25 17:25 environ.c
+-rw-r--r-- 1 hannah13mo hannah13mo   659 Mar 25 17:16 environ.h
+-rw-r--r-- 1 hannah13mo hannah13mo  2045 Mar 21 21:36 error.h
+-rw-r--r-- 1 hannah13mo hannah13mo  7134 Mar 26 20:05 executor.c
+-rw-r--r-- 1 hannah13mo hannah13mo   632 Mar 26 19:25 executor.h
+-rw-r--r-- 1 hannah13mo hannah13mo  8494 Mar 26 08:16 internal.c
+-rw-r--r-- 1 hannah13mo hannah13mo    98 Mar 23 18:49 internal.h
+-rw-r--r-- 1 hannah13mo hannah13mo  1688 Mar 23 19:45 list.c
+-rw-r--r-- 1 hannah13mo hannah13mo   740 Mar 23 19:46 list.h
+-rwxr-xr-x 1 hannah13mo hannah13mo     0 Mar 26 20:06 output.txt
+-rw-r--r-- 1 hannah13mo hannah13mo 13442 Mar 26 20:03 parser.c
+-rwxr-xr-x 1 hannah13mo hannah13mo 52032 Mar 26 20:05 sush
+-rw-r--r-- 1 hannah13mo hannah13mo  3220 Mar 26 19:56 sush.c
+-rwxr-xr-x 1 hannah13mo hannah13mo 18256 Mar 26 15:04 test
+-rw-r--r-- 1 hannah13mo hannah13mo  3842 Mar 26 16:16 test.c
