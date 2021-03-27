@@ -168,29 +168,9 @@ void handle_input_output(struct subcommand *subcmd) {
  * @param args The array of args that exec() takes in
  */
 void execute(char *command, char *const *args, struct subcommand *subcmd) {
-    pid_t pid = fork(); 
-    int pipes[2];
-    int prev_output;
-    int pipe_code = pipe(pipes);
-    if(pipe_code < 0){
-        perror("Could not create pipes.\n");
-        return;
-    }
-
-    prev_output=pipes[0];
-
-    if (pid == 0) { //Child process 
-        
-        dup2(pipes[0], STDIN_FILENO);  //Dup to parent pipe
-        dup2(pipes[1], STDOUT_FILENO);  //Dup to parent pipe
-
-        //if there is output
         handle_input_output(subcmd); 
         handleChildInExecutor(command, args); 
-    } else {  //Parent process 
-        pipes[0] = prev_output;
         handleParentInExecutor(pid, 0); 
-    }
 }
 
 /**
