@@ -7,6 +7,7 @@
 
 #include "list.h"
 #include "datastructures.h"
+#include "internal.h"
 
 #define MAX_BUFFER 4096
 
@@ -190,7 +191,6 @@ int is_redir(char c){
 **/
 int is_character(char c){
   if(!is_redir(c) && !is_whitespace(c) && !is_quote(c)){
-    printf("%c\n", c);
     return 1;
   }
 
@@ -264,7 +264,7 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
             
         } else if (entry->token == REDIRECT_INPUT) {
             entry = list_entry(curr->next, argument, list);
-            printf("1: (%s)\n", entry->contents);
+            printf("Input: (%s)\n", entry->contents);
             subcommand->input = strdup(entry->contents);
             
             //Delete the current entry target and free from memory
@@ -315,9 +315,25 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
  */
 static void make_subcommand(struct list_head *list_commands, struct list_head *list_args) {
   struct subcommand *sub = malloc(sizeof(struct subcommand)); 
-  get_input_output(list_args, sub); //fills in the struct fields: input, output, type
-  make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
-  list_add_tail(&sub->list, list_commands); 
+
+  int internal_code = handle_internal(list_args);
+  if(internal_code == 1){
+      get_input_output(list_args, sub); //fills in the struct fields: input, output, type
+      make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
+      list_add_tail(&sub->list, list_commands); 
+  }else if( internal_code == -1){
+      printf("Error has occured");
+  }
+  
+}
+
+
+void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
+  arg = malloc(sizeof(argument)); 
+  arg->contents = strdup(temp); // Copy temp to contents
+  arg->token = token; // Set token to normal
+  list_add_tail(&arg->list, list_args); // Add to the end of the list
+  memset(temp, 0, 50);
 }
 
 
@@ -342,32 +358,38 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
         arg = malloc(sizeof(argument)); 
         // If we encounter redirect symbol
         if (current_character == REDIR_OUT) {
+
+          if(strlen(temp)>0){
+            add_arg_to_list(temp, NORMAL, arg, list_args);
+          }
+
           // If we encounter two redir_in symbols ">>"
           if (commandline->subcommand[i][j + 1] == REDIR_OUT) {
-            arg->token = REDIRECT_OUTPUT_APPEND; // Set token to redirect + append
             strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
+            printf("TOKEN: %s\n", temp);
+            add_arg_to_list(temp, REDIRECT_OUTPUT_APPEND, arg, list_args);
+            j++;
           } else {
             // Otherwise, we only encountered one redir_in '>'
-            arg->token = REDIRECT_OUTPUT_TRUNCATE; // Set token to redirect + truncate
             strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
+            add_arg_to_list(temp, REDIRECT_OUTPUT_TRUNCATE, arg, list_args);
           }
 
-          arg->contents = strdup(temp); // Store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
-          memset(temp, 0, 50); // Clear memory
-
-          // Increment J so we don't run this again
-          if (arg->token == REDIRECT_OUTPUT_APPEND) {
-            j++;
-          }
+          
         } else if (current_character == REDIR_IN) {
           // If we encounter the redirect output symbol
-          arg = malloc(sizeof(argument)); 
-          arg->token = REDIRECT_INPUT; // Set token to redirect input 
+
+          //If the temp var already has an argument in it prior to redir_in
+          if(strlen(temp)>0){
+            add_arg_to_list(temp, NORMAL, arg, list_args);
+          }
+          
+          
           strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
-          arg->contents = strdup(temp); // Store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); // Add the argument to the list of args
-          memset(temp, 0, 50); // Clear memory
+
+          //Always add the redir_in to the list
+          add_arg_to_list(temp, REDIRECT_INPUT, arg, list_args);
+          
         } else {
           // Current char is a character
           currentState = CHARACTER; // Set current state
@@ -375,23 +397,15 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
 
           // if we found the last word, and it has no space after, add it to the list
           if (j == (strlen(commandline->subcommand[i]) - 1)) {
-            arg = malloc(sizeof(argument)); 
-            arg->contents = strdup(temp); // Copy temp to contents
-            arg->token = NORMAL; // Set token to normal
-            list_add_tail(&arg->list, list_args); // Add to the end of the list
-            memset(temp, 0, 50);
+            add_arg_to_list(temp, NORMAL, arg, list_args);
           }
         } 
       } else if (current_characters_state == WHITESPACE) {
         // If we see a space or tab
         if (currentState != WHITESPACE) {
+          add_arg_to_list(temp, NORMAL, arg, list_args);  //add the current content of temp to the list of args
           currentState = WHITESPACE;
-          arg = malloc(sizeof(argument));
-          arg->token = NORMAL;             // set token to normal
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
           word_count++;                    //increment which word we are on
-          memset(temp, 0, 50);             //reset the temp word variable to blank
         }
       } else if (current_characters_state == QUOTE) {
         if (currentState != QUOTE) {
@@ -402,16 +416,15 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;
           }
-          arg->token = NORMAL; // set token to normal
-          arg = malloc(sizeof(argument));
-          arg->contents = strdup(temp);    //store the last full word into contents of an argument
-          list_add_tail(&arg->list, list_args); //add the argument to the list of args
-          memset(temp, 0, 50);             //reset the temp word variable to blank
+
+          add_arg_to_list(temp, NORMAL, arg, list_args);
           currentState = WHITESPACE;
         }
       }
     }
     //The req specify ending the list of arguements with a NULL for exec
+
+    
     arg = malloc(sizeof(argument));
     arg->contents = strdup("\0");
     arg->token = NORMAL;

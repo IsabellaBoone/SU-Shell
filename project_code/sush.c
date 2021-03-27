@@ -52,53 +52,64 @@ int main(int argc, char **argv, char **envp) {
     LIST_HEAD(list_commands); //a list of subcommand structs, represents the comamndline
     char input[INPUT_LENGTH]; 
     //setenv("PS1", ">", 1); 
+    int num=0;
 
     while(1){
-        //printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
-        //fflush(stdout); 
-        fgets(input, INPUT_LENGTH, stdin); 
         
-        //printf("Before: %d", input);
-        if(argc > 0){
-            int len = strlen(input); 
-            input[len-1] = '\0';
+        printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
+        fflush(stdout);
+         
+        fgets(input, INPUT_LENGTH, stdin);
+        
+        if(input[0] != '\n'){
+            printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
+            fflush(stdout); 
+            //printf("Before: %d", input);
+            if(argc > 0){
+                int len = strlen(input); 
+                input[len-1] = '\0';
 
-            cmdline.num = find_num_subcommands(input, len);
+                cmdline.num = find_num_subcommands(input, len);
+                
+                //creates an array of pointers, in proportion to the number of subcommand
+                cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
+
+                copy_subcommands(input, cmdline.num, cmdline.subcommand);
+
+                //printing information 
+                //print_num_sentences(sentence_info.num);
+                //print_subcommands(cmdline.num, cmdline.subcommand); 
+
+                parse_commandline(&list_args, &cmdline, &list_commands); //CAN'T USE LIST ARGS AFTER THIS
+                //display_list(&list_commands);
+
+            }
+
             
-            //creates an array of pointers, in proportion to the number of subcommand
-            cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
-
-            copy_subcommands(input, cmdline.num, cmdline.subcommand);
-
-            //printing information 
-            //print_num_sentences(sentence_info.num);
-            print_subcommands(cmdline.num, cmdline.subcommand); 
-
-            parse_commandline(&list_args, &cmdline, &list_commands); //CAN'T USE LIST ARGS AFTER THIS
-
-        }
-
-        //Testing for the internal commands: 
-        int internal_code = handle_internal(&list_commands);
-        // printf("%d\n", internal_code);
-        if(internal_code == 1){
-           //finds the length of the list, used to allocate space for the array of character pointers 
-            int list_len = getListLength(&list_commands); 
-            run_command(list_len, cmdline.num, &list_commands); 
-        }else if( internal_code == -1){
-            printf("Error has occured");
-        }
+            //TODO will need to pass a list_commands, instead of list_args
+            //Testing for the internal commands: 
+            int internal_code = handle_internal(&list_commands);
+            if(internal_code == 1){
+                // finds the length of the list, used to allocate space for the array of character pointers 
+                int list_len = getListLength(&list_commands); 
+                run_command(list_len, cmdline.num, &list_commands); 
+            }else if( internal_code == -1){
+                printf("Error has occured");
+            }
+            
         
-        //Freeing Malloced Stuff
-        //TODO: Make this a seperate function in a diff file
-        for(int i=0;i<cmdline.num; i++){
-            free(cmdline.subcommand[i]);
+            //Freeing Malloced Stuff
+            //TODO: Make this a seperate function in a diff file
+            for(int i=0;i<cmdline.num; i++){
+                free(cmdline.subcommand[i]);
+            }
+            free(cmdline.subcommand);
+        
+            clear_list_argument(&list_args);  
+            clear_list_command(&list_commands); 
         }
-        free(cmdline.subcommand);
-    
-        clear_list_argument(&list_args);  
-        clear_list_command(&list_commands); 
     }
+    
 
 }
 
