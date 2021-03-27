@@ -20,12 +20,15 @@
 
 #define INPUT_LENGTH 4094 // Max input length for strings
 
+/**
+ * @brief Clears and frees the list_commands
+ * 
+ * @param list The list of commands being freed. 
+ */
 void clear_list_command(struct list_head *list) {
     struct subcommand *entry; 
-    
     while (!list_empty(list)) {
-        entry = list_entry(list->next, struct subcommand, list);  
-        list_del(&entry->list);
+        entry = list_entry(list->next, struct subcommand, list);
         //free 2D array
         int i = 0;
         while (entry->exec_args[i] != NULL) {
@@ -33,13 +36,12 @@ void clear_list_command(struct list_head *list) {
             i++; 
         }
         free(entry->exec_args); //free array
-
         free(entry->input); 
         free(entry->output); 
+        list_del(&entry->list); 
         free(entry); 
     }
 }
-
 
 /**
  * @brief Project 2: Shell Project 
@@ -56,20 +58,18 @@ int main(int argc, char **argv, char **envp) {
     int num=0;
 
     make_env_list(&list_env, envp);
-    display_env_list(&list_env);
-
-    
+    //display_env_list(&list_env);
 
     while(1){
         
-        printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
+        printf("%s", get_env(&list_env, "PS1")); //TODO: need to change this, not a viable solution 
         fflush(stdout);
          
         fgets(input, INPUT_LENGTH, stdin);
         
         if(input[0] != '\n'){
-            printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
-            fflush(stdout); 
+            // printf("%s", get_env("PS1")); //TODO: need to change this, not a viable solution 
+            // fflush(stdout); 
             //printf("Before: %d", input);
             if(argc > 0){
                 int len = strlen(input); 
@@ -94,15 +94,15 @@ int main(int argc, char **argv, char **envp) {
             
             //TODO will need to pass a list_commands, instead of list_args
             //Testing for the internal commands: 
-            int internal_code = handle_internal(&list_commands);
-            if(internal_code == 1){
+            int internal_code = handle_internal(&list_commands, &list_env);
+            if(internal_code == 1) {
                 // finds the length of the list, used to allocate space for the array of character pointers 
                 int list_len = getListLength(&list_commands); 
                 run_command(list_len, cmdline.num, &list_commands, (make_env_array(&list_env))); 
-            }else if( internal_code == -1){
-                printf("Error has occured");
+            } else if (internal_code == 6) { //TODO: is this alright?
+                clear_list_command(&list_commands); 
+                exit(0);
             }
-            
         
             //Freeing Malloced Stuff
             //TODO: Make this a seperate function in a diff file
@@ -115,7 +115,6 @@ int main(int argc, char **argv, char **envp) {
             clear_list_command(&list_commands); 
         }
     }
-    
-
+    clear_list_env(&list_env); 
 }
 

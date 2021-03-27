@@ -13,6 +13,8 @@
 
 #include "environ.h"
 
+#define BUFFER_SIZE 4096
+
 /**
  * @brief Returns the environment variable name. 
  * 
@@ -25,10 +27,19 @@ static char * get_env_variable_name(char const *contents) {
     char *new_contents = malloc(len * sizeof(char)); 
     
     strncpy(new_contents, contents, len); 
-
     char *name; 
     name = strtok(new_contents, "=");
     return name; 
+}
+
+static char * get_env_variable_value(char const *contents) {
+    int len = strlen(contents) + 1; 
+    char new_contents[BUFFER_SIZE];  
+    strncpy(new_contents, contents, len); 
+    char *value; 
+    value = strtok(new_contents, "="); 
+    value = strtok(NULL, "\0");
+    return value; 
 }
 
 /**
@@ -74,9 +85,9 @@ void free_env_list(struct list_head *list) {
   while (!list_empty(list))
   {
     entry = list_entry(list->next, struct environment, list);
-    list_del(&entry->list);
     free(entry->contents);
     free(entry->name); 
+    list_del(&entry->list);
     free(entry);
   }
 } 
@@ -98,7 +109,8 @@ char * get_env(struct list_head *list, char *name) {
         env = list_entry(curr, struct environment, list); 
         curr = curr->next; 
         if (!strcmp(env->name, name)) { 
-           return env->contents; 
+           
+           return get_env_variable_value(env->contents); 
         }
     }
     return NULL; 
@@ -115,44 +127,46 @@ char * get_env(struct list_head *list, char *name) {
 int set_env(struct list_head *list, char *name, char *value) {
  struct environment *env; 
  struct list_head *curr; 
-/*
-    //search list for variable
-    printf("broke\n");
-    curr = list->next; //<-- breaking here???
-    printf("broke");
-    while (curr != list) {
-        printf("broke");
+ curr = list; 
+    for (curr = curr->next; curr != list; curr = curr->next) {
         env = list_entry(curr, struct environment, list); 
-        curr = curr->next; 
-        if (strcmp(env->name, name) == 0) { //item is in list 
-            //set contents 
-            printf("broke"); 
-            char *temp = name; 
-            temp = strcat(temp, value); 
-             printf("broke");
-            env->contents = strdup(temp); 
-             printf("broke");
+        if (strcmp(env->name, name) == 0) {
+            int len = strlen(name) + strlen(value) + 1 + 1; 
+            env->contents = malloc(len * sizeof(char)); 
+            strcat(env->contents, name);
+            strcat(env->contents, "="); 
+            strcat(env->contents, value); 
+            return 0;  
+        }
+    }
+    env = malloc(sizeof(struct environment)); 
+    env->name = strdup(name); 
+    //TODO: make funtion 
+    int len = strlen(name) + strlen(value) + 1 + 1; 
+    env->contents = malloc(len * sizeof(char)); 
+    strcat(env->contents, name);
+    strcat(env->contents, "="); 
+    strcat(env->contents, value);  
+    list_add_tail(&env->list, list); 
+
+    return 0;  
+}
+
+int unset_env(struct list_head *list_env, char *name) {
+    struct list_head *curr; 
+    struct environment *entry; 
+
+    curr = list_env; 
+    for (curr = curr->next; curr != list_env; curr = curr->next) {
+        entry = list_entry(curr, struct environment, list); 
+        if (strcmp(entry->name, name) == 0) {
+            list_del(&entry->list); 
+            free(entry->name);
+            free(entry->contents); 
+            free(entry); 
             return 0; 
         }
     }
-    */
-    
-    // struct environment *env = malloc(sizeof(struct environment)); 
-    //     env->contents = strdup(envp[i]); 
-    //     char *name = get_env_variable_name(env->contents);
-    //     env->name = name; 
-    //     list_add_tail(&env->list, list); 
-    //     i++; 
-
-    //variable not in list so add variable 
-    // struct environment *environment = malloc(sizeof(struct environment));
-    // char *temp = name; 
-    // temp = strcat(temp, value); 
-    // env->contents = temp;
-    // environment->contents = temp; 
-    // environment->name = name; 
-    // list_add_tail(environment, list); 
-    return 0;  
 }
 
 /**
@@ -170,7 +184,17 @@ void free_env_array(char **envp, int len) {
 
 }
 
-//TODO: free environment list
+void clear_list_env(struct list_head *list) {
+    struct environment *entry; 
+    
+    while (!list_empty(list)) {
+        entry = list_entry(list->next, struct environment, list);  
+        list_del(&entry->list);
+        free(entry->name); 
+        free(entry->contents); 
+        free(entry); 
+    }
+}
 
 /**
  * @brief Take in the envp list and displays it on the screen.

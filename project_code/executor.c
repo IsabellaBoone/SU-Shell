@@ -27,7 +27,7 @@ void handleChildInExecutor(char *command, char *const *args, char **env) {
  * @param pid The process id
  * @param option The option passed to waitpid 
  */
-static void handleParentInExecutor(pid_t pid, int option) {
+void handleParentInExecutor(pid_t pid, int option) {
     int status; 
     waitpid(pid, &status, option); 
     //printf("Child exited: %d\n", status);

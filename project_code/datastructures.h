@@ -62,6 +62,11 @@ typedef struct Commandline {
 /**
  * @brief subcommand - a sub command from the full commandline (sub commands are split at the pipes)
  * 
+ * exec_args A parsed subcommand ending with NULL
+ * input The input of the command (stdin, file name)
+ * output The output of the command (stdout, file name)
+ * type The type of redirect
+ * list The list which subcommand points to
  */
 struct subcommand {
     char **exec_args; 
@@ -70,20 +75,6 @@ struct subcommand {
     enum Token type; 
     struct list_head list; 
 }; 
-
-/**
- * @brief A subcommand
- * 
- * @param list_head part of a list of subcommands
- * @param exec_args 2D char array of arguments
- */
-// typedef struct Subcommand
-// {
-//   struct list_head list; // part of a list of subcommands
-//   char **exec_args; // equivalent to lsargs in hw3
-//   // struct argument *args; // a pointer to the head of arg_list
-//   // enum command_type command; // internal environment, job internal, normal
-// } subcommand;
 
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 

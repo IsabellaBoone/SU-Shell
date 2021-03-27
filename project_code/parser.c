@@ -306,6 +306,24 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
 }
 
 /**
+ * @brief Checks to see if the command is an internal command
+ * 
+ * @param arg1 The name of the command
+ * @return int Returns 0 if the command is an internal command, else 1 if it is not
+ */
+int check_internal_command(struct list_head *list_args) {
+  char *internal_cmds[] = {"setenv", "getenv", "unsetenv", "cd", "pwd", "exit"};
+  argument *entry = list_entry(list_args->next, argument, list); 
+  int i; 
+  for (i = 0; i < 6; i++) {
+    if (strcmp(internal_cmds[i], entry->contents) == 0) {
+      return 0; 
+    }
+  }
+  return 1; 
+}
+
+/**
  * @brief Constructs a struct that holds information about the individual subcommand of 
  * from the command line. The subcommand is added to a list of commands, which represents the entire 
  * command line. 
@@ -316,14 +334,14 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
 static void make_subcommand(struct list_head *list_commands, struct list_head *list_args) {
   struct subcommand *sub = malloc(sizeof(struct subcommand)); 
 
-  int internal_code = handle_internal(list_args);
-  if(internal_code == 1){
+  if(check_internal_command(list_args)){
       get_input_output(list_args, sub); //fills in the struct fields: input, output, type
-      make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
-      list_add_tail(&sub->list, list_commands); 
-  }else if( internal_code == -1){
-      printf("Error has occured");
+  } else {
+    sub->input = strdup("stdin"); 
+    sub->output = strdup("stdout"); 
   }
+  make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
+  list_add_tail(&sub->list, list_commands); 
   
 }
 

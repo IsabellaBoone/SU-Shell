@@ -1,3 +1,4 @@
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
@@ -86,9 +87,11 @@ void test_print_list(struct list_head *list_commands) {
 
 /*
 int main (int argc, char **argv, char **envp) {
+
     
     LIST_HEAD(list_envp); 
 
+    /*
     printf("Test 1: \n"); 
     test_display_env_array(envp);
 
@@ -147,6 +150,13 @@ int main (int argc, char **argv, char **envp) {
    list_add_tail(&subcmd->list, &list_commands); 
 
    test_print_list(&list_commands); 
+   
+    
+    test_make_env_list(&list_envp, envp); 
+
+    set_env(&list_envp, "PS1", ">"); 
+    display_env_list(&list_envp); 
+
     return 0; 
 }
 */
