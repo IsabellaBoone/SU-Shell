@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -125,8 +126,8 @@ void free_exec_arg_list(char **args, int len) {
  * @param command The type of command being executed 
  * @param args The list of args sent to exec 
  */
-void handleChildInExecutor(char *command, char *const *args) {
-    execvp(command, args); 
+void handleChildInExecutor(char *command, char *const *args, char **env) {
+    execvpe(command, args, env); 
     perror("The process failed to execute"); //Should we handle an error here if we are unable to 
     exit(-1); 
 }
@@ -168,13 +169,13 @@ void handle_input_output(struct subcommand *subcmd) {
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
  */
-void execute(char *command, char *const *args, struct subcommand *subcmd) {
+void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) {
     pid_t pid = fork(); 
 
     if (pid == 0) { //Child process 
         //if there is output
         handle_input_output(subcmd); 
-        handleChildInExecutor(command, args); 
+        handleChildInExecutor(command, args, env); 
     } else {  //Parent process 
         handleParentInExecutor(pid, 0); 
     }
@@ -184,10 +185,10 @@ void execute(char *command, char *const *args, struct subcommand *subcmd) {
 /**
  * @brief Runs the command typed on the command line 
  * 
- * @param len The length of the linked list 
+ * @param len The length of the linked listssss
  * @param list_args The linked list of args that are being executed 
  */
-void run_command(int len, int subcommand_count, struct list_head *list_commands) {
+void run_command(int len, int subcommand_count, struct list_head *list_commands, char **env) {
     //printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
     struct subcommand *entry; 
     // struct subcommand subcmd; 
@@ -211,7 +212,6 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
             char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
 
             // command becomes: /bin/<command> 
-            strcpy(command, "/bin/"); 
             strcat(command, entry->exec_args[0]); 
 
             // executes a basic command
@@ -238,7 +238,7 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
                 }
 
                 handle_input_output(entry);
-                handleChildInExecutor(command, entry->exec_args);
+                handleChildInExecutor(command, entry->exec_args, env);
 
             } else {  //Parent process
                 prev_output=pipes[0];   //get output from the child, and ensure that we can save it for next child
@@ -260,9 +260,8 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
             char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
 
             // command becomes: /bin/<command> 
-            strcpy(command, "/bin/"); 
             strcat(command, entry->exec_args[0]); 
-            execute(command, entry->exec_args, entry);
+            execute(command, entry->exec_args, entry, env);
             free(command); 
         }
 
