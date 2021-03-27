@@ -7,7 +7,6 @@
  * @version 0.1
  * @date 2021-03-16
  */
-
 // Imports
 #include <stdio.h> // for expert debugging
 #include <stdlib.h> // for memory allocation
@@ -17,6 +16,7 @@
 #include "datastructures.h"
 #include "executor.h"
 #include "internal.h" 
+#include "environ.h"
 
 #define INPUT_LENGTH 4094 // Max input length for strings
 
@@ -50,9 +50,15 @@ int main(int argc, char **argv, char **envp) {
     commandline cmdline;
     LIST_HEAD(list_args); //TODO should probably put this in parser.c and have it visible only there 
     LIST_HEAD(list_commands); //a list of subcommand structs, represents the comamndline
+    LIST_HEAD(list_env); 
     char input[INPUT_LENGTH]; 
     //setenv("PS1", ">", 1); 
     int num=0;
+
+    make_env_list(&list_env, envp);
+    display_env_list(&list_env);
+
+    
 
     while(1){
         
@@ -92,7 +98,7 @@ int main(int argc, char **argv, char **envp) {
             if(internal_code == 1){
                 // finds the length of the list, used to allocate space for the array of character pointers 
                 int list_len = getListLength(&list_commands); 
-                run_command(list_len, cmdline.num, &list_commands); 
+                run_command(list_len, cmdline.num, &list_commands, (make_env_array(&list_env))); 
             }else if( internal_code == -1){
                 printf("Error has occured");
             }

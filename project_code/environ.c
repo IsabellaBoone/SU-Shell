@@ -60,6 +60,7 @@ void display_env_array(char **envp) {
         printf("%s\n", envp[i]); 
         i++; 
     }
+    envp[i] = NULL;
 }
 
 /**
