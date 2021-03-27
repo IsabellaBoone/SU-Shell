@@ -78,21 +78,17 @@ int main(int argc, char **argv, char **envp) {
 
         }
 
-        
-        //TODO will need to pass a list_commands, instead of list_args
         //Testing for the internal commands: 
-        //int internal_code = handle_internal(&list_commands);
+        int internal_code = handle_internal(&list_commands);
         // printf("%d\n", internal_code);
-        // if(internal_code == 1){
-        //     //finds the length of the list, used to allocate space for the array of character pointers 
-               int list_len = getListLength(&list_commands); 
-        //     // displayList(&list_args);
-                run_command(list_len, cmdline.num, &list_commands); 
-        // }else if( internal_code == -1){
-        //     printf("Error has occured");
-        // }
+        if(internal_code == 1){
+           //finds the length of the list, used to allocate space for the array of character pointers 
+            int list_len = getListLength(&list_commands); 
+            run_command(list_len, cmdline.num, &list_commands); 
+        }else if( internal_code == -1){
+            printf("Error has occured");
+        }
         
-    
         //Freeing Malloced Stuff
         //TODO: Make this a seperate function in a diff file
         for(int i=0;i<cmdline.num; i++){

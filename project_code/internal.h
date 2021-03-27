@@ -1,6 +1,8 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
-int handle_internal(struct list_head *subcommand); 
+#include "datastructures.h"
+
+int handle_internal(struct list_head *commands); 
 
 #endif

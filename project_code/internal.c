@@ -21,7 +21,7 @@
 // Struct for internal commands, used to create a table of commands 
 typedef struct internal {
   const char *name; 
-  int (*handler)(struct list_head *subcommand); 
+  int (*handler)(struct subcommand *subcommand); 
 } internal_t;  
 
 /**
@@ -31,10 +31,25 @@ typedef struct internal {
  * @param status The value returned by a function that is being checked 
  * @param command The command that caused the error 
  */
-void check_status(int status, char *command) {
+static void check_status(int status, char *command) {
   if (status == -1) {
     fprintf(stderr, ERROR_INVALID_CMD, command); //TODO: am I using the right error, the command isn't wrong, just an error in processing
   }
+}
+
+/**
+ * @brief Returns the number of arguments that are in the subcommand. An argument 
+ * refers to the number of elements in the exec_args array, minus the NULL character
+ * 
+ * @param subcommand The subcommand that is being evaluated. 
+ * @return int The number of args of the subcommand, not counting the NULL
+ */
+static int get_num_args(struct subcommand *subcommand) {
+  int count = 0; 
+  while (subcommand->exec_args[count] != NULL) {
+    count++; 
+  }
+  return count; 
 }
 
 /**
@@ -44,9 +59,8 @@ void check_status(int status, char *command) {
  * @param subcommand The parsed command written on the command line
  * @return char* The name of the internal command (first argument)
  */
-char * get_internal_command(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->next, argument, list); 
-  return entry->contents; 
+static char * get_internal_command(struct subcommand *subcommand) {
+  return subcommand->exec_args[0]; 
 }
 
 /**
@@ -56,9 +70,8 @@ char * get_internal_command(struct list_head *subcommand) {
  * @param subcommand The parsed command written on the command line
  * @return char* The name of an environment variable or path (second argument)
  */
-char * get_second_argument(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->next->next, argument, list); 
-  return entry->contents; 
+static char * get_second_argument(struct subcommand *subcommand) {
+  return subcommand->exec_args[1]; 
 }
 
 /**
@@ -68,9 +81,8 @@ char * get_second_argument(struct list_head *subcommand) {
   * @param subcommand The parsed command written on the command line
  * @return char* The value entered by the user (third argument) 
  */
-char * get_third_argument(struct list_head *subcommand) {
-  argument *entry = list_entry(subcommand->next->next->next, argument, list); 
-  return entry->contents; 
+static char * get_third_argument(struct subcommand *subcommand) {
+  return subcommand->exec_args[2]; 
 }
 
 /**
@@ -80,10 +92,10 @@ char * get_third_argument(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
  */
-static int handle_setenv(struct list_head *subcommand) {
+static int handle_setenv(struct subcommand *subcommand) {
   //checks that the setenv command is valid
-  int num_args = getListLength(subcommand); 
-  if (num_args != 3 + 1) { //plus 1 since we store a NULL at the end
+  int num_args = get_num_args(subcommand); 
+  if (num_args != 3) { //plus 1 since we store a NULL at the end
     fprintf(stderr, ERROR_SETENV_ARG); 
     return -1; 
   }
@@ -109,12 +121,12 @@ static int handle_setenv(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline 
  * @return int If an error occured, output is -1 else output is 0
  */
-static int handle_getenv(struct list_head *subcommand) {
-  int num_args = getListLength(subcommand); 
-  if (num_args == 1 + 1) { //subcommand: getenv
+static int handle_getenv(struct subcommand *subcommand) {
+  int num_args = get_num_args(subcommand); 
+  if (num_args == 1) { //subcommand: getenv
     //returns the entire environment and prints it to std out
     //TODO: print the entire environment, may need to use commands from environ.c
-  } else if (num_args == 2 + 1) { //subcommmand: getenv $NAME
+  } else if (num_args == 2) { //subcommmand: getenv $NAME
     char *name = get_second_argument(subcommand); 
     *name++;
     char *env = getenv(name); 
@@ -140,9 +152,9 @@ static int handle_getenv(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
  */
-static int handle_unsetenv(struct list_head *subcommand) {
-  int num_args = getListLength(subcommand); 
-  if (num_args != 2 + 1) { //plus 1 since we store a NULL at the end
+static int handle_unsetenv(struct subcommand *subcommand) {
+  int num_args = get_num_args(subcommand); 
+  if (num_args != 2) { //plus 1 since we store a NULL at the end
     fprintf(stderr, ERROR_UNSETENV_ARG); 
     return -1; 
   }
@@ -161,9 +173,9 @@ static int handle_unsetenv(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
  */
-static int handle_cd(struct list_head *subcommand) {
-  int num_args = getListLength(subcommand); 
-  if (num_args == 1 + 1) { //subcommand: cd
+static int handle_cd(struct subcommand *subcommand) {
+  int num_args = get_num_args(subcommand); 
+  if (num_args == 1) { //subcommand: cd
     char *home = getenv("HOME"); //get home env variable 
     int status = chdir(home); 
 
@@ -173,7 +185,7 @@ static int handle_cd(struct list_head *subcommand) {
       fprintf(stderr, ERROR_CD_NOHOME); 
       return -1; 
     }
-  } else if (num_args == 2 + 1) { //subcommand: cd pathname
+  } else if (num_args == 2) { //subcommand: cd pathname
     char *path = get_second_argument(subcommand); 
     int status = chdir(path); 
 
@@ -196,16 +208,18 @@ static int handle_cd(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
  */
-static int handle_pwd(struct list_head *subcommand) {
+static int handle_pwd(struct subcommand *subcommand) {
   //#define ERROR_PWD_ARG "Error - pwd takes no arguments\n"
-  int num_args = getListLength(subcommand); 
-  if (num_args != 1 + 1) { //subcommand is NOT: pwd
+  int num_args = get_num_args(subcommand); 
+  if (num_args != 1) { //subcommand is NOT: pwd
     fprintf(stderr, ERROR_PWD_ARG); 
     return -1; 
   } 
 
   char buf[BUFFER_SIZE]; 
   char *status = getcwd(buf, sizeof(buf)); 
+  printf("%s\n", buf); 
+  memset(buf, 0, BUFFER_SIZE); 
 
   if (status == NULL) {
     check_status(-1, "pwd"); 
@@ -221,7 +235,7 @@ static int handle_pwd(struct list_head *subcommand) {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0 
  */
-static int handle_exit(struct list_head *subcommand) {
+static int handle_exit(struct subcommand *subcommand) {
   //TODO: free all memory that has been allocated up to this point
   //need to wait until all the functions have been made 
   //will need to free argument, commmandline, lists being used, etc
@@ -246,14 +260,15 @@ internal_t internal_cmds[] = {
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
  */
-int handle_internal(struct list_head *subcommand) {
+int handle_internal(struct list_head *commands) {
   int i = 0; 
-  struct argument *entry;
+  struct subcommand *entry;
+  entry = list_entry(commands->next, struct subcommand, list); 
 
   while(internal_cmds[i].name != 0) {
-    char *command_name = get_internal_command(subcommand); 
+    char *command_name = get_internal_command(entry); 
     if (!strcmp(internal_cmds[i].name, command_name)) {
-      return internal_cmds[i].handler(subcommand); 
+      return internal_cmds[i].handler(entry); 
     }
     i++;
   }

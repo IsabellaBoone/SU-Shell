@@ -424,6 +424,3 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
   }
   free(temp);
 }
-
-
-
