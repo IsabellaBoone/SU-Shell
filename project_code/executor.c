@@ -169,12 +169,26 @@ void handle_input_output(struct subcommand *subcmd) {
  */
 void execute(char *command, char *const *args, struct subcommand *subcmd) {
     pid_t pid = fork(); 
+    int pipes[2];
+    int prev_output;
+    int pipe_code = pipe(pipes);
+    if(pipe_code < 0){
+        perror("Could not create pipes.\n");
+        return;
+    }
+
+    prev_output=pipes[0];
 
     if (pid == 0) { //Child process 
+        
+        dup2(pipes[0], STDIN_FILENO);  //Dup to parent pipe
+        dup2(pipes[1], STDOUT_FILENO);  //Dup to parent pipe
+
         //if there is output
         handle_input_output(subcmd); 
         handleChildInExecutor(command, args); 
     } else {  //Parent process 
+        pipes[0] = prev_output;
         handleParentInExecutor(pid, 0); 
     }
 }
@@ -193,13 +207,16 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
     // int new_length = getListLength(list_args); 
     // display_list(list_args);
 
-    if(subcommand_count>=1){
+    if(subcommand_count>1){
         // //initializes an array of character pointers that will be passed to exec()
         // char **exec_arg_list = malloc(new_length * sizeof(char *)); 
         
         //Loops through each subcommand and executes
         struct list_head *curr;  
-        
+        int i=0;
+        int prev_output=0;  //we need this to hold the child output for our loop
+        int pipes[2];   //standard pipes
+
         for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
             //Looks at one subcommand 
             entry = list_entry(curr, struct subcommand, list); 
@@ -210,7 +227,36 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
             strcat(command, entry->exec_args[0]); 
 
             // executes a basic command
-            execute(command, entry->exec_args, entry);
+            
+            int pipe_code = pipe(pipes);
+            if(pipe_code < 0){
+                perror("Could not create pipes.\n");
+                return;
+            }
+
+            
+            pid_t pid = fork(); 
+            
+
+            if (pid == 0) { //Child process 
+                if(i<subcommand_count-1){   //All children except the last must write to parent
+                    dup2(prev_output, 0);   //read prev_output set by parent (initially empty)
+                    close(prev_output);     //close for safety
+                    dup2(pipes[1], 1);      //write output back to parent
+                    close(pipes[1]);        //close for safety
+                }else{  //The last child doesnt output to the parent for the loop 
+                    dup2(prev_output, 0);   //Read final pipe from parent
+                    close(prev_output);     //close for safety
+                }
+
+                handle_input_output(entry);
+                handleChildInExecutor(command, entry->exec_args);
+
+            } else {  //Parent process
+                prev_output=pipes[0];   //get output from the child, and ensure that we can save it for next child
+            }
+
+            i++;
             free(command); 
         }
     }
