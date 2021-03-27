@@ -140,6 +140,7 @@ void handleChildInExecutor(char *command, char *const *args) {
 void handleParentInExecutor(pid_t pid, int option) {
     int status; 
     waitpid(pid, &status, option); 
+    printf("Child exited: %d\n", status);
 }
 
 void handle_input_output(struct subcommand *subcmd) {
@@ -168,9 +169,16 @@ void handle_input_output(struct subcommand *subcmd) {
  * @param args The array of args that exec() takes in
  */
 void execute(char *command, char *const *args, struct subcommand *subcmd) {
+    pid_t pid = fork(); 
+
+    if (pid == 0) { //Child process 
+        //if there is output
         handle_input_output(subcmd); 
         handleChildInExecutor(command, args); 
+    } else {  //Parent process 
         handleParentInExecutor(pid, 0); 
+    }
+
 }
 
 /**
@@ -187,7 +195,7 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
     // int new_length = getListLength(list_args); 
     // display_list(list_args);
 
-    if(subcommand_count>1){
+    if(subcommand_count>=2){
         // //initializes an array of character pointers that will be passed to exec()
         // char **exec_arg_list = malloc(new_length * sizeof(char *)); 
         
@@ -234,10 +242,29 @@ void run_command(int len, int subcommand_count, struct list_head *list_commands)
 
             } else {  //Parent process
                 prev_output=pipes[0];   //get output from the child, and ensure that we can save it for next child
+
+                // close(pipes[0]);
+                // close(pipes[1]); 
+                
+                //handleParentInExecutor(pid, 0);
             }
 
             i++;
             free(command); 
         }
+    }else{
+        struct list_head *curr;  
+        for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
+            //Looks at one subcommand 
+            entry = list_entry(curr, struct subcommand, list); 
+            char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
+
+            // command becomes: /bin/<command> 
+            strcpy(command, "/bin/"); 
+            strcat(command, entry->exec_args[0]); 
+            execute(command, entry->exec_args, entry);
+            free(command); 
+        }
+
     }
 }

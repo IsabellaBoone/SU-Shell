@@ -75,25 +75,24 @@ int main(int argc, char **argv, char **envp) {
 
                 //printing information 
                 //print_num_sentences(sentence_info.num);
-                print_subcommands(cmdline.num, cmdline.subcommand); 
+                //print_subcommands(cmdline.num, cmdline.subcommand); 
 
                 parse_commandline(&list_args, &cmdline, &list_commands); //CAN'T USE LIST ARGS AFTER THIS
+                //display_list(&list_commands);
 
             }
 
             
             //TODO will need to pass a list_commands, instead of list_args
             //Testing for the internal commands: 
-            //int internal_code = handle_internal(&list_commands);
-            // printf("%d\n", internal_code);
-            // if(internal_code == 1){
-            //     //finds the length of the list, used to allocate space for the array of character pointers 
+            int internal_code = handle_internal(&list_commands);
+            if(internal_code == 1){
+                // finds the length of the list, used to allocate space for the array of character pointers 
                 int list_len = getListLength(&list_commands); 
-            //     // displayList(&list_args);
-                    run_command(list_len, cmdline.num, &list_commands); 
-            // }else if( internal_code == -1){
-            //     printf("Error has occured");
-            // }
+                run_command(list_len, cmdline.num, &list_commands); 
+            }else if( internal_code == -1){
+                printf("Error has occured");
+            }
             
         
             //Freeing Malloced Stuff
