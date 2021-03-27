@@ -249,7 +249,6 @@ internal_t internal_cmds[] = {
 int handle_internal(struct list_head *subcommand) {
   int i = 0; 
   struct argument *entry;
-
   while(internal_cmds[i].name != 0) {
     char *command_name = get_internal_command(subcommand); 
     if (!strcmp(internal_cmds[i].name, command_name)) {

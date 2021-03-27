@@ -7,6 +7,7 @@
 
 #include "list.h"
 #include "datastructures.h"
+#include "internal.h"
 
 #define MAX_BUFFER 4096
 
@@ -314,9 +315,16 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
  */
 static void make_subcommand(struct list_head *list_commands, struct list_head *list_args) {
   struct subcommand *sub = malloc(sizeof(struct subcommand)); 
-  get_input_output(list_args, sub); //fills in the struct fields: input, output, type
-  make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
-  list_add_tail(&sub->list, list_commands); 
+
+  int internal_code = handle_internal(list_args);
+  if(internal_code == 1){
+      get_input_output(list_args, sub); //fills in the struct fields: input, output, type
+      make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
+      list_add_tail(&sub->list, list_commands); 
+  }else if( internal_code == -1){
+      printf("Error has occured");
+  }
+  
 }
 
 
@@ -424,7 +432,6 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
 
     //Makes a subcomamnd, then clears the list_args so that more args can be scanned
     //at this point list_args == "ls" "-l" "\0" 
-    display_list(list_args);
     make_subcommand(list_commands, list_args); 
     clear_list_argument(list_args); 
   }

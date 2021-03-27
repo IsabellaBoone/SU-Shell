@@ -140,7 +140,7 @@ void handleChildInExecutor(char *command, char *const *args) {
 void handleParentInExecutor(pid_t pid, int option) {
     int status; 
     waitpid(pid, &status, option); 
-    printf("Child exited: %d\n", status);
+    //printf("Child exited: %d\n", status);
 }
 
 void handle_input_output(struct subcommand *subcmd) {
@@ -188,7 +188,7 @@ void execute(char *command, char *const *args, struct subcommand *subcmd) {
  * @param list_args The linked list of args that are being executed 
  */
 void run_command(int len, int subcommand_count, struct list_head *list_commands) {
-    printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
+    //printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
     struct subcommand *entry; 
     // struct subcommand subcmd; 
     // get_input_output_old(list_args, &subcmd);  

@@ -56,11 +56,14 @@ int main(int argc, char **argv, char **envp) {
 
     while(1){
         
+        printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
+        fflush(stdout);
+         
         fgets(input, INPUT_LENGTH, stdin);
         
         if(input[0] != '\n'){
-            // printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
-            // fflush(stdout); 
+            printf("%s", getenv("PS1")); //TODO: need to change this, not a viable solution 
+            fflush(stdout); 
             //printf("Before: %d", input);
             if(argc > 0){
                 int len = strlen(input); 
