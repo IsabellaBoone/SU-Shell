@@ -348,6 +348,7 @@ static void make_subcommand(struct list_head *list_commands, struct list_head *l
 
 void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
   arg = malloc(sizeof(argument)); 
+  printf("allocated array\n");
   arg->contents = strdup(temp); // Copy temp to contents
   arg->token = token; // Set token to normal
   list_add_tail(&arg->list, list_args); // Add to the end of the list
@@ -373,7 +374,6 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
 
       // If the current char is not a space, tab, or quotation mark
       if (current_characters_state == CHARACTER || current_characters_state == REDIR) {
-        arg = malloc(sizeof(argument)); 
         // If we encounter redirect symbol
         if (current_character == REDIR_OUT) {
 
