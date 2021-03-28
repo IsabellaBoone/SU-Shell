@@ -17,31 +17,9 @@
 #include "executor.h"
 #include "internal.h" 
 #include "environ.h"
+#include "clearlist.h"
 
 #define INPUT_LENGTH 4094 // Max input length for strings
-
-/**
- * @brief Clears and frees the list_commands
- * 
- * @param list The list of commands being freed. 
- */
-void clear_list_command(struct list_head *list) {
-    struct subcommand *entry; 
-    while (!list_empty(list)) {
-        entry = list_entry(list->next, struct subcommand, list);
-        //free 2D array
-        int i = 0;
-        while (entry->exec_args[i] != NULL) {
-            free(entry->exec_args[i]); //free array elements
-            i++; 
-        }
-        free(entry->exec_args); //free array
-        free(entry->input); 
-        free(entry->output); 
-        list_del(&entry->list); 
-        free(entry); 
-    }
-}
 
 /**
  * @brief Project 2: Shell Project 
@@ -98,7 +76,10 @@ int main(int argc, char **argv, char **envp) {
             if(internal_code == 1) {
                 // finds the length of the list, used to allocate space for the array of character pointers 
                 int list_len = getListLength(&list_commands); 
-                run_command(list_len, cmdline.num, &list_commands, (make_env_array(&list_env))); 
+                char **new_envp = make_env_array(&list_env); 
+                run_command(list_len, cmdline.num, &list_commands, new_envp);
+                list_len = getListLength(&list_env); 
+                free_env_array(new_envp, list_len);  
             } else if (internal_code == 6) { //TODO: is this alright?
                 clear_list_command(&list_commands); 
                 exit(0);
