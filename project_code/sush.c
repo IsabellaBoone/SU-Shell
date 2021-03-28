@@ -17,9 +17,36 @@
 #include "executor.h"
 #include "internal.h" 
 #include "environ.h"
-#include "clearlist.h"
 
 #define INPUT_LENGTH 4094 // Max input length for strings
+
+void clear_list_command(struct list_head *list) {
+    struct subcommand *entry; 
+    while (!list_empty(list)) {
+        entry = list_entry(list->next, struct subcommand, list);
+        //free 2D array
+        int i = 0;
+        while (entry->exec_args[i] != NULL) {
+            free(entry->exec_args[i]); //free array elements
+            i++; 
+        }
+        free(entry->exec_args); //free array
+        free(entry->input); 
+        free(entry->output); 
+        list_del(&entry->list); 
+        free(entry); 
+    }
+}
+
+void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env, commandline cmdline) {
+    clear_list_command(list_commands); 
+    clear_list_env(list_env); 
+
+    for(int i=0;i<cmdline.num; i++){
+        free(cmdline.subcommand[i]);
+    }
+    free(cmdline.subcommand);
+}
 
 /**
  * @brief Project 2: Shell Project 
@@ -75,13 +102,13 @@ int main(int argc, char **argv, char **envp) {
             int internal_code = handle_internal(&list_commands, &list_env);
             if(internal_code == 1) {
                 // finds the length of the list, used to allocate space for the array of character pointers 
-                int list_len = getListLength(&list_commands); 
+                //int list_len = getListLength(&list_commands); 
                 char **new_envp = make_env_array(&list_env); 
-                run_command(list_len, cmdline.num, &list_commands, new_envp);
-                list_len = getListLength(&list_env); 
+                run_command(cmdline.num, &list_commands, new_envp);
+                int list_len = getListLength(&list_env); 
                 free_env_array(new_envp, list_len);  
             } else if (internal_code == 6) { //TODO: is this alright?
-                clear_list_command(&list_commands); 
+                freeing_on_exit(&list_commands, &list_env, cmdline);
                 exit(0);
             }
         
@@ -92,7 +119,7 @@ int main(int argc, char **argv, char **envp) {
             }
             free(cmdline.subcommand);
         
-            clear_list_argument(&list_args);  
+            //clear_list_argument(&list_args);  
             clear_list_command(&list_commands); 
         }
     }

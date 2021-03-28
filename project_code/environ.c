@@ -52,7 +52,7 @@ void make_env_list(struct list_head *list, char **envp) {
     int i = 0; 
     while (envp[i] != NULL) {
         struct environment *env = malloc(sizeof(struct environment)); 
-        env->contents = strdup(envp[i]); 
+        env->contents = envp[i]; 
         char *name = get_env_variable_name(env->contents);
         env->name = name; 
         list_add_tail(&env->list, list); 
@@ -73,24 +73,6 @@ void display_env_array(char **envp) {
     }
     envp[i] = NULL;
 }
-
-/**
- * @brief Deletes the list.
- * 
- * @param list The list being deleted. 
- */
-void free_env_list(struct list_head *list) {
-  struct environment *entry; //Current entry  during traversal
-
-  while (!list_empty(list))
-  {
-    entry = list_entry(list->next, struct environment, list);
-    free(entry->contents);
-    free(entry->name); 
-    list_del(&entry->list);
-    free(entry);
-  }
-} 
 
 /**
  * @brief Given a list head for the list that contains the environment variable it returns the 

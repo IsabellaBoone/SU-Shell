@@ -348,7 +348,6 @@ static void make_subcommand(struct list_head *list_commands, struct list_head *l
 
 void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
   arg = malloc(sizeof(argument)); 
-  printf("allocated array\n");
   arg->contents = strdup(temp); // Copy temp to contents
   arg->token = token; // Set token to normal
   list_add_tail(&arg->list, list_args); // Add to the end of the list

@@ -15,7 +15,6 @@
 #include "list.h"
 #include "error.h"
 #include "environ.h"
-#include "clearlist.h"
 
 #define BUFFER_SIZE 4096
 
@@ -229,7 +228,7 @@ static int handle_pwd(struct subcommand *subcommand, struct list_head *list_env)
 static int handle_exit(struct subcommand *subcommand, struct list_head *list_env) {
   //TODO LEAK: how to clear the env_array
   //TODO LEAK: how to clear the commands list 
-  clear_list_env(list_env); 
+  //clear_list_env(list_env); 
   return 6; 
 }
 

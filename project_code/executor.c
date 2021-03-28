@@ -77,7 +77,7 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
  * @param len The length of the linked listssss
  * @param list_args The linked list of args that are being executed 
  */
-void run_command(int len, int subcommand_count, struct list_head *list_commands, char **env) {
+void run_command(int subcommand_count, struct list_head *list_commands, char **env) {
     //printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
     struct subcommand *entry; 
 

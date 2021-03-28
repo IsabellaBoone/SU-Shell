@@ -33,7 +33,7 @@ void test_free_env_array(char **envp, struct list_head *list) {
 }
 
 void test_free_env_list(struct list_head *list) {
-    free_env_list(list); 
+    clear_list_env(list); 
 } 
 
 void test_get_env(struct list_head *list) {
@@ -84,22 +84,22 @@ void test_print_list(struct list_head *list_commands) {
 }
 
 
-
 /*
+
 int main (int argc, char **argv, char **envp) {
 
     
     LIST_HEAD(list_envp); 
 
-    /*
+    
     printf("Test 1: \n"); 
     test_display_env_array(envp);
 
     printf("\nTest 2: \n");
     test_make_env_list(&list_envp, envp); 
-    test_display_env_list(&list_envp); 
+    //test_display_env_list(&list_envp); 
     //free_env_list(&list_envp); 
-
+    
     printf("\nTest 3: \n");
     char **envp_test = test_make_env_array(&list_envp);
 
@@ -112,10 +112,12 @@ int main (int argc, char **argv, char **envp) {
     printf("\nTest next to last: \n"); 
     test_free_env_array(envp_test, &list_envp); 
     printf("Freed??? %s\n", envp_test[0]); //yay it works
+    
 
     printf("\nTest last: \n"); 
     test_free_env_list(&list_envp); 
     display_env_list(&list_envp); //yay it works 
+
     
    LIST_HEAD(list_args); 
    LIST_HEAD(list_commands); 
@@ -156,7 +158,7 @@ int main (int argc, char **argv, char **envp) {
 
     set_env(&list_envp, "PS1", ">"); 
     display_env_list(&list_envp); 
-
+    
     return 0; 
-}
-*/
+} */
+
