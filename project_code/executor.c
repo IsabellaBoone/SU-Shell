@@ -153,8 +153,7 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
 
                 // close(pipes[0]);
                 // close(pipes[1]); 
-                
-                //handleParentInExecutor(pid, 0);
+                // handleParentInExecutor(pid, 0);
             }
 
             i++;

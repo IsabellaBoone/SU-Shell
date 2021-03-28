@@ -95,19 +95,22 @@ void copy_subcommand(char **subcommand, char *destination, int i)
  */
 void copy_subcommands(char input[], int num, char **subcommand)
 {
-  int i, len;
-  char *sentence = strtok(input, "|");
+  if(input[0]!='\n'){
+    int i, len;
+    char *sentence = strtok(input, "|");
 
-  len = strlen(sentence);
-
-  for (i = 0; i < num; i++)
-  {
     len = strlen(sentence);
-    subcommand[i] = malloc(len + 2);
-    copy_subcommand(subcommand, sentence, i);
 
-    sentence = strtok(NULL, "|");
+    for (i = 0; i < num; i++)
+    {
+      len = strlen(sentence);
+      subcommand[i] = malloc(len + 2);
+      copy_subcommand(subcommand, sentence, i);
+
+      sentence = strtok(NULL, "|");
+    }
   }
+  
 }
 
 /**
