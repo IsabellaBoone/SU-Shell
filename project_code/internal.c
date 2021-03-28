@@ -1,8 +1,6 @@
 /**
  * @file internal.c
- * @author Isabella Boone 
- * @author Hannah Moats
- * @author John Gable
+ * @author Hannah Moats 
  * @brief Handle Internal Commands
  * @date 2021-03-22
  */
@@ -27,6 +25,7 @@ typedef struct internal {
 /**
  * @brief If an error occurred then an error will be printed to the screen
  * with the name of the internal command that caused the error. 
+ * @author Hannah Moats
  * 
  * @param status The value returned by a function that is being checked 
  * @param command The command that caused the error 
@@ -40,6 +39,7 @@ static void check_status(int status, char *command) {
 /**
  * @brief Returns the number of arguments that are in the subcommand. An argument 
  * refers to the number of elements in the exec_args array, minus the NULL character
+ * @author Hannah Moats
  * 
  * @param subcommand The subcommand that is being evaluated. 
  * @return int The number of args of the subcommand, not counting the NULL
@@ -55,6 +55,7 @@ static int get_num_args(struct subcommand *subcommand) {
 /**
  * @brief Get the first parsed argument that was entered on the command line.
  * This argument should be the name of the internal command that is being called.
+ * @author Hannah Moats
  * 
  * @param subcommand The parsed command written on the command line
  * @return char* The name of the internal command (first argument)
@@ -66,6 +67,7 @@ static char * get_internal_command(struct subcommand *subcommand) {
 /**
  * @brief Get the second parsed argument that was entered on the command line. 
  * This argument should be either a path name, or a name of an environment variable. 
+ * @author Hannah Moats
  * 
  * @param subcommand The parsed command written on the command line
  * @return char* The name of an environment variable or path (second argument)
@@ -77,6 +79,7 @@ static char * get_second_argument(struct subcommand *subcommand) {
 /**
  * @brief Get the third parsed argument that was entered on the command line. 
  * This argument should be a value used to set an environment variable. 
+ * @author Hannah Moats
  * 
   * @param subcommand The parsed command written on the command line
  * @return char* The value entered by the user (third argument) 
@@ -88,6 +91,7 @@ static char * get_third_argument(struct subcommand *subcommand) {
 /**
  * @brief Handles the setenv internal command. The set environment takes a name 
  * and sets the given value to that name. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
@@ -110,6 +114,7 @@ static int handle_setenv(struct subcommand *subcommand, struct list_head *list_e
 /**
  * @brief Handles the getenv internal command. The getenv command is used to 
  * either get a specified environment, given by a name. Or to print the entire environment. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline 
  * @return int If an error occured, output is -1 else output is 0
@@ -139,6 +144,7 @@ static int handle_getenv(struct subcommand *subcommand, struct list_head *list_e
 /**
  * @brief Handles the unsetenv command. The unsetenv command is used to delete the 
  * given name from the environment. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
@@ -159,6 +165,7 @@ static int handle_unsetenv(struct subcommand *subcommand, struct list_head *list
  * @brief Handles the change directory internal command. The change directory command
  * either sets the current directory to the HOME directory, or changes to a specific 
  * directory given a path. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
@@ -194,6 +201,7 @@ static int handle_cd(struct subcommand *subcommand, struct list_head *list_env) 
  * @brief Handles the print working directory internal command. The print working direcotry
  * command calls getcwd() system call and is used to print the current directory
  * that the user is in. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0
@@ -221,14 +229,12 @@ static int handle_pwd(struct subcommand *subcommand, struct list_head *list_env)
 /**
  * @brief Handles the exit internal command. Not only does the command exit the
  * shell, but it also frees any malloced data to ensure there are no memory leaks. 
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int Returns a code to be processed by sush to clear list_command and exit. 
  */
 static int handle_exit(struct subcommand *subcommand, struct list_head *list_env) {
-  //TODO LEAK: how to clear the env_array
-  //TODO LEAK: how to clear the commands list 
-  //clear_list_env(list_env); 
   return 6; 
 }
 
@@ -246,6 +252,7 @@ internal_t internal_cmds[] = {
 /**
  * @brief Given the command on the command line, this function determines
  * what command needs to be handled and calls the respective function.
+ * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
  * @return int If an error occured, output is -1 else output is 0

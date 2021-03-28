@@ -1,3 +1,15 @@
+/**
+ * @file executor.c
+ * @author Hannah Moats 
+ * @author John Gable 
+ * @author Isabella Boone
+ * @brief Handles the execution of the commands, inlcuding pipes
+ * @version 0.1
+ * @date 2021-03-28
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #define _GNU_SOURCE
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -11,7 +23,7 @@
 
 /**
  * @brief Handles the execution of the child process 
- * 
+ * @author Hannah Moats 
  * @param command The type of command being executed 
  * @param args The list of args sent to exec 
  */
@@ -23,7 +35,7 @@ void handleChildInExecutor(char *command, char *const *args, char **env) {
 
 /**
  * @brief Handles the execution of the parent process 
- * 
+ * @author Hannah Moats
  * @param pid The process id
  * @param option The option passed to waitpid 
  */
@@ -33,6 +45,14 @@ void handleParentInExecutor(pid_t pid, int option) {
     //printf("Child exited: %d\n", status);
 }
 
+/**
+ * @brief Handles getting input from a file, outputting to a file for commands. 
+ * @author Hannah Moats 
+ * @author John Gable 
+ * @author Isabella Boone
+ *
+ * @param subcmd The command who's input and output is being handled. 
+ */
 static void handle_input_output(struct subcommand *subcmd) {
     if (strcmp(subcmd->output, "stdout") != 0) {
         const char *filename = subcmd->output; 
@@ -72,7 +92,10 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
 }
 
 /**
- * @brief Runs the command typed on the command line 
+ * @brief Runs the command typed on the command line including pipes
+ * @author Hannah Moats 
+ * @author John Gable (implemented pipes)
+ * @author Isabella Boone
  * 
  * @param len The length of the linked listssss
  * @param list_args The linked list of args that are being executed 

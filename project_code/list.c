@@ -1,3 +1,15 @@
+/**
+ * @file list.c
+ * @author John Gable
+ * @author Hannah Moats
+ * @brief Handles list related functions that are not specific to a specific list type. 
+ * @version 0.1
+ * @date 2021-03-28
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
+
 #include "list.h"
 
 void list_add(struct list_head *new, struct list_head *head){
@@ -55,10 +67,11 @@ void list_splice(struct list_head *list, struct list_head *head){
 }
 
 /**
- * @brief Get the length of the list 
+ * @brief Get the length of the list. 
+ * @author Hannah Moats
  * 
- * @param list 
- * @return int 
+ * @param list The list that is being counted. 
+ * @return int The length of the list. 
  */
 int getListLength(struct list_head *list) {
     int count = 0; 

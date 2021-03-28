@@ -1,3 +1,16 @@
+/**
+ * @file parser.c
+ * @author Hannah Moats 
+ * @author John Gable 
+ * @author Isabella Boone
+ * @brief Parses the command line and fills in the list_commands which is a list 
+ * of subcommands. Each subcommand, contains info on input and output, and a 2D array. 
+ * @version 0.1
+ * @date 2021-03-28
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +51,7 @@ enum State
 
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
+ * @author Hannah Moats 
  * 
  * @param input String to search through
  * @param len int length of String
@@ -60,6 +74,7 @@ int find_num_subcommands(char input[], int len)
 
 /**
  * @brief Copy an individual subcommand to a pointer
+ * @author Hannah Moats  
  * 
  * @param subcommand 2D char array to copy from.
  * @param sentence char * destination to copy to
@@ -72,6 +87,7 @@ void copy_subcommand(char **subcommand, char *destination, int i)
 
 /**
  * @brief Copy a String of subcommands into a 2D array of subcommands. 
+ * @author Hannah Moats 
  * 
  * @param input String to break apart
  * @param num int number of subcommands in String
@@ -96,6 +112,7 @@ void copy_subcommands(char input[], int num, char **subcommand)
 
 /**
  * @brief Print number of subcommands in the input
+ * @author Hannah Moats 
  * 
  * @param num int number of subcommands
  */
@@ -122,6 +139,9 @@ void print_subcommands(int num, char **subcommands)
 /**
  * @brief Traverse through linked list and free it from memory
  * after deleting each node entry. 
+ * @author Hannah Moats
+ * @author John Gable 
+ * @author Isabella Boone 
  * 
  * @param list struct list_head to clear
  */
@@ -140,6 +160,7 @@ void clear_list_argument(struct list_head *list)
 
 /**
  * @brief Navigate through list_args and print contents to console. 
+ * @author John Gable 
  * 
  * @param list struct list_head to print
  */
