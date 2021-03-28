@@ -22,6 +22,7 @@
  * @return int 
  */
 int main(int argc, char **argv, char **envp) {
+    
     commandline cmdline;
     LIST_HEAD(list_args); //TODO should probably put this in parser.c and have it visible only there 
     LIST_HEAD(list_commands); //a list of subcommand structs, represents the comamndline
@@ -34,7 +35,6 @@ int main(int argc, char **argv, char **envp) {
     if (get_env(&list_env, "PS1") == NULL) {
         set_env(&list_env, "PS1", ">"); 
     }
-    int num=0; ///< What is this for???
 
     //scan for user input
     run_user_input(&list_commands, &list_env, &list_args, cmdline, input, argc); 

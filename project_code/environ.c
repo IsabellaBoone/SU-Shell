@@ -52,7 +52,7 @@ void make_env_list(struct list_head *list, char **envp) {
     int i = 0; 
     while (envp[i] != NULL) {
         struct environment *env = malloc(sizeof(struct environment)); 
-        env->contents = envp[i]; 
+        env->contents = strdup(envp[i]); 
         char *name = get_env_variable_name(env->contents);
         env->name = name; 
         list_add_tail(&env->list, list); 
@@ -92,11 +92,29 @@ char * get_env(struct list_head *list, char *name) {
         curr = curr->next; 
         if (!strcmp(env->name, name)) { 
            
-           return get_env_variable_value(env->contents); 
+           //return get_env_variable_value(env->contents); 
+            return env->contents;
         }
     }
     return NULL; 
 }
+
+
+char * get_env2(struct list_head *list, char *name) {
+    struct environment *env; 
+    struct list_head *curr; 
+
+    curr = list->next; 
+    while (curr != list) {
+        env = list_entry(curr, struct environment, list); 
+        curr = curr->next; 
+        if (!strcmp(env->name, name)) { 
+            return get_env_variable_value(env->contents); 
+        }
+    }
+    return NULL; 
+}
+
 
 /**
  * @brief Set the env object
@@ -107,14 +125,15 @@ char * get_env(struct list_head *list, char *name) {
  * @return int Returns 0 upon success, returns -1 if unsuccessful/error ocurred
  */
 int set_env(struct list_head *list, char *name, char *value) {
- struct environment *env; 
- struct list_head *curr; 
- curr = list; 
+    struct environment *env; 
+    struct list_head *curr; 
+    curr = list; 
     for (curr = curr->next; curr != list; curr = curr->next) {
         env = list_entry(curr, struct environment, list); 
         if (strcmp(env->name, name) == 0) {
             int len = strlen(name) + strlen(value) + 1 + 1; 
-            env->contents = malloc(len * sizeof(char)); 
+            free(env->contents);
+            env->contents = calloc(len, sizeof(char)); 
             strcat(env->contents, name);
             strcat(env->contents, "="); 
             strcat(env->contents, value); 

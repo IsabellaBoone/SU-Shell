@@ -271,7 +271,7 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
         } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
             subcommand->type = entry->token; 
             entry = list_entry(curr->next, argument, list);
-            printf("1: (%s)\n", entry->contents);
+            //printf("1: (%s)\n", entry->contents);
             subcommand->output = strdup(entry->contents); 
 
             //Delete the current entry target and free from memory
@@ -279,7 +279,7 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
             free(entry);
 
             entry = list_entry(curr, argument, list);
-            printf("2: (%s)\n", entry->contents);
+            //printf("2: (%s)\n", entry->contents);
             list_del(&entry->list); 
             free(entry);
 
@@ -288,7 +288,7 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
             
         } else if (entry->token == REDIRECT_INPUT) {
             entry = list_entry(curr->next, argument, list);
-            printf("Input: (%s)\n", entry->contents);
+            //printf("Input: (%s)\n", entry->contents);
             subcommand->input = strdup(entry->contents);
             
             //Delete the current entry target and free from memory
@@ -407,7 +407,6 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
           // If we encounter two redir_in symbols ">>"
           if (commandline->subcommand[i][j + 1] == REDIR_OUT) {
             strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
-            printf("TOKEN: %s\n", temp);
             add_arg_to_list(temp, REDIRECT_OUTPUT_APPEND, arg, list_args);
             j++;
           } else {
@@ -452,7 +451,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
         if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
-          while (current_character != QUOTATIONMARK)
+          while (commandline->subcommand[i][j] != QUOTATIONMARK)
           {
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;

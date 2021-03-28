@@ -56,13 +56,9 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 
     if(sushhome_exists(list_env)){
         struct stat sb;
-        printf("SUSHHOME Exists\n");
-        char* sushhome = get_env(list_env, "SUSHHOME");
-        printf("%s\n", sushhome);
+        char* sushhome = get_env2(list_env, "SUSHHOME");
         int stat_status = stat(sushhome, &sb);
-        printf("%d\n", stat_status);
         if ((sb.st_mode & S_IRUSR) || (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
-            printf("File is good for read\n");
             FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
             //read from file and execute commands 
             while (fgets(input, INPUT_LENGTH-1, file)!=NULL) {
@@ -70,7 +66,6 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
                 int len = strlen(input); 
                 input[len-1] = '\0';
                 cmdline.num = find_num_subcommands(input, len);
-                printf("%s\n", input);
                 //creates an array of pointers, in proportion to the number of subcommands
                 cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
                 copy_subcommands(input, cmdline.num, cmdline.subcommand);
@@ -97,14 +92,14 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 }
 
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-    while(1) {
+    // while(1) {
         
-        printf("%s", get_env(list_env, "PS1")); 
-        fflush(stdout);
-         
-        fgets(input, INPUT_LENGTH, stdin); //scan for user input
         
+        fgets(input, INPUT_LENGTH, stdin);
         if(input[0] != '\n'){
+            //printf("%s", get_env(list_env, "PS1")); 
+            printf("%s", get_env2(list_env, "PS1")); 
+            fflush(stdout);
             int len = strlen(input); 
             input[len-1] = '\0';
 
@@ -114,7 +109,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
             cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
             copy_subcommands(input, cmdline.num, cmdline.subcommand);
             parse_commandline(list_args, &cmdline, list_commands);
-
+            
             //Checks if an internal command, if it is then it is run, else a normal command is run
             int internal_code = handle_internal(list_commands, list_env);
             if(internal_code == 1) {
@@ -129,8 +124,13 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
 
             free_commandline_struct(cmdline);   
             clear_list_command(list_commands); 
+
+            //printf("%s", get_env(list_env, "PS1")); 
+            printf("%s", get_env2(list_env, "PS1")); 
+            fflush(stdout);
         }
-    }
+
+    // }
 }
 
 //void run_file_input();
