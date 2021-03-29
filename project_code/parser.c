@@ -33,7 +33,6 @@
 #define REDIR_IN '<'
 #define REDIR_OUT '>'
 
-
 /**
  * @brief Current state on parser 
  */
@@ -48,8 +47,6 @@ enum State
   INPUT
 };
 
-
-
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
  * @author Hannah Moats 
@@ -60,16 +57,14 @@ enum State
  */
 int find_num_subcommands(char input[], int len)
 {
-  int i, count = 1;
-
-  for (i = 0; i < len; i++)
+  int count = 1; // Number of subcommands counted 
+  for (int i = 0; i < len; i++) // For every char in the string
   {
     if (input[i] == PIPE)
     {
       count++;
     }
   }
-
   return count;
 }
 
@@ -83,7 +78,7 @@ int find_num_subcommands(char input[], int len)
  */
 void copy_subcommand(char **subcommand, char *destination, int i)
 {
-  strcpy(subcommand[i], destination);
+  strcpy(subcommand[i], destination); // Copy subcommand to destination
 }
 
 /**
@@ -96,22 +91,22 @@ void copy_subcommand(char **subcommand, char *destination, int i)
  */
 void copy_subcommands(char input[], int num, char **subcommand)
 {
-  if(input[0]!='\n'){
+  // If is a newline
+  if(input[0]!=NEWLINE){ 
     int i, len;
-    char *sentence = strtok(input, "|");
+    char *cmd = strtok(input, "|"); // Take the command before the pipe 
 
-    len = strlen(sentence);
+    len = strlen(cmd); // Get length of command 
 
     for (i = 0; i < num; i++)
     {
-      len = strlen(sentence);
-      subcommand[i] = malloc(len + 2);
-      copy_subcommand(subcommand, sentence, i);
+      len = strlen(cmd);
+      subcommand[i] = malloc(len + 2); // ALlcoate space 
+      copy_subcommand(subcommand, cmd, i); // Copy subcommand
 
-      sentence = strtok(NULL, "|");
+      cmd = strtok(NULL, "|"); 
     }
   }
-  
 }
 
 /**
@@ -122,7 +117,7 @@ void copy_subcommands(char input[], int num, char **subcommand)
  */
 void print_num_subcommands(int num)
 {
-  printf("num: %d\n", num);
+  printf("num: %d\n", num); // Print number of subcommands
 }
 
 /**
@@ -133,8 +128,7 @@ void print_num_subcommands(int num)
  */
 void print_subcommands(int num, char **subcommands)
 {
-  int i = 0;
-  for (i = 0; i < num; i++)
+  for (int i = 0; i < num; i++)
   {
     printf("%d : (%s)\n", i, subcommands[i]);
   }
@@ -143,18 +137,17 @@ void print_subcommands(int num, char **subcommands)
 /**
  * @brief Traverse through linked list and free it from memory
  * after deleting each node entry. 
- * @author Hannah Moats
- * @author John Gable 
- * @author Isabella Boone 
  * 
  * @param list struct list_head to clear
  */
 void clear_list_argument(struct list_head *list)
 {
-  argument *entry; //Current entry  during traversal
+  argument *entry; //Current entry during traversal
 
+  // While list is not empty
   while (!list_empty(list))
   {
+    // Delete entry from list and free its contents and itself.
     entry = list_entry(list->next, argument, list);
     list_del(&entry->list);
     free(entry->contents);
@@ -170,50 +163,63 @@ void clear_list_argument(struct list_head *list)
  */
 void display_list(struct list_head *list)
 {
-  struct list_head *start = list->next; //Start at the first node after the head
-  struct list_head *curr; //Tracks current node during traversal
-  argument *entry; //Current nodes struct with contents
+  struct list_head *start = list->next; // Start at the first node after the head
+  struct list_head *curr; // Tracks current node during traversal
+  argument *entry; // Current nodes struct with contents
 
+  // Iterate through list until we reach the beginning node again. 
   for (curr = list->next; curr->next != start; curr = curr->next)
   {
-    entry = list_entry(curr, argument, list);
-    printf("(%s), (%d)\n", entry->contents, entry->token);
+    entry = list_entry(curr, argument, list); // Update entry 
+    printf("(%s), (%d)\n", entry->contents, entry->token); // Print
   }
 }
 
+/**
+ * @brief Check whether or not a char is considered whitespace.
+ * 
+ * @param c char to check
+ * @return int 1 if it is considered whitespace, 0 if it is not. 
+ */
 int is_whitespace(char c){
   if(c == SPACE || c == TAB){
     return 1;
   }
-
   return 0;
 }
 
-
+/**
+ * @brief Check whether or not a char is considered a quote. 
+ * 
+ * @param c char to check. 
+ * @return int 1 if it is considered a quote, 0 if it is not. 
+ */
 int is_quote(char c){
   if(c == QUOTATIONMARK){
     return 1;
   }
-
   return 0;
 }
 
+/**
+ * @brief Check whether or not a char is considered a redirect symbol. 
+ * 
+ * @param c char to check.
+ * @return int 1 if it is considered a redirect symbol, 0 if it is not. 
+ */
 int is_redir(char c){
   if(c == REDIR_IN || c == REDIR_OUT ){
     return 1;
   }
-
   return 0;
 }
 
-
 /**
- * Receives an individual character, and checks to ensure
- * the character is not a space, tab, or quote.
+ * @brief Checks whether or not a char is considered a character. 
  * 
- * If it is not, return 1 for true (is a char),
- * else return 0 (not a char).
-**/
+ * @param c char to check
+ * @return int 1 if it is considered character, 0 if it is not. 
+ */
 int is_character(char c){
   if(!is_redir(c) && !is_whitespace(c) && !is_quote(c)){
     return 1;
@@ -222,7 +228,12 @@ int is_character(char c){
   return 0;
 }
 
-
+/**
+ * @brief Check character state of a char.  
+ * 
+ * @param c char to check. 
+ * @return int return 1: whitespace, 2: character, 3: quote, 5:redir
+ */
 int check_character_state(char c){
   if(is_character(c)){
     return CHARACTER;
@@ -244,66 +255,70 @@ int check_character_state(char c){
  * @param subcommand The sub command of the commandline that is being "filled" in 
  */
 static void get_input_output(struct list_head *arg, struct subcommand *subcommand) {
-    struct list_head *curr;  
-    argument *entry; 
-    //Assigns default values to the struct 
-    subcommand->input = strdup("stdin");    
-    subcommand->output = strdup("stdout"); 
-    subcommand->type = NORMAL; 
+  struct list_head *curr;  
+  argument *entry; 
+  // Assign default values to the struct 
+  subcommand->input = strdup("stdin");    
+  subcommand->output = strdup("stdout"); 
+  subcommand->type = NORMAL; 
     
-    for (curr = arg->next; curr != arg; curr = curr->next) {
-        entry = list_entry(curr, argument, list); 
-        if (entry->token == REDIRECT_OUTPUT_APPEND) {
-            subcommand->type = entry->token; 
-            entry = list_entry(curr->next, argument, list);
-            subcommand->output = strdup(entry->contents); 
+  // Iterate through list until we reach the beginning again.
+  for (curr = arg->next; curr != arg; curr = curr->next) {
+    entry = list_entry(curr, argument, list); // Update entry 
+    // If token is redirect append
+    if (entry->token == REDIRECT_OUTPUT_APPEND) {
+      subcommand->type = entry->token; // Make subcommand token match
+      entry = list_entry(curr->next, argument, list);
+      subcommand->output = strdup(entry->contents); // Make subcommand output match
 
-            //Delete the current entry target and free from memory
-            list_del(&entry->list); 
-            free(entry);
+      //Delete the current entry target and free from memory
+      list_del(&entry->list); 
+      free(entry);
 
-            entry = list_entry(curr, argument, list);
-            list_del(&entry->list); 
-            free(entry);
+      entry = list_entry(curr, argument, list);
+      list_del(&entry->list); 
+      free(entry);
 
-            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
-            arg=curr;
+      //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+      arg=curr;
 
-        } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
-            subcommand->type = entry->token; 
-            entry = list_entry(curr->next, argument, list);
-            //printf("1: (%s)\n", entry->contents);
-            subcommand->output = strdup(entry->contents); 
+    // If token is redirect truncate
+    } else if (entry->token == REDIRECT_OUTPUT_TRUNCATE) {
+      subcommand->type = entry->token;
+      entry = list_entry(curr->next, argument, list);
+      //printf("1: (%s)\n", entry->contents);
+      subcommand->output = strdup(entry->contents);
 
-            //Delete the current entry target and free from memory
-            list_del(&entry->list); 
-            free(entry);
+      //Delete the current entry target and free from memory
+      list_del(&entry->list); 
+      free(entry);
 
-            entry = list_entry(curr, argument, list);
-            //printf("2: (%s)\n", entry->contents);
-            list_del(&entry->list); 
-            free(entry);
+      entry = list_entry(curr, argument, list);
+      //printf("2: (%s)\n", entry->contents);
+      list_del(&entry->list); 
+      free(entry);
 
-            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
-            arg=curr;
+      //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+      arg=curr;
+
+      // If token is redirect input      
+    } else if (entry->token == REDIRECT_INPUT) {
+      entry = list_entry(curr->next, argument, list); // Update entry
+      //printf("Input: (%s)\n", entry->contents);
+      subcommand->input = strdup(entry->contents); 
             
-        } else if (entry->token == REDIRECT_INPUT) {
-            entry = list_entry(curr->next, argument, list);
-            //printf("Input: (%s)\n", entry->contents);
-            subcommand->input = strdup(entry->contents);
+      //Delete the current entry target and free from memory
+      list_del(&entry->list); 
+      free(entry);
             
-            //Delete the current entry target and free from memory
-            list_del(&entry->list); 
-            free(entry);
-            
-            entry = list_entry(curr, argument, list);
-            list_del(&entry->list); 
-            free(entry);
+      entry = list_entry(curr, argument, list);
+      list_del(&entry->list); 
+      free(entry);
 
-            //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
-            arg=curr;
-        }
+      //Adjust start in order to satisfy the loop condition incase its referenced node was deleted  
+      arg=curr;
     }
+  }
 }
 
 /**
@@ -316,7 +331,7 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
 static void make_exec_args_array(struct list_head *list_args, struct subcommand *sub) {
   int num_args = getListLength(list_args); 
   sub->exec_args = malloc(num_args * sizeof(char *)); 
-  //loop through args list and assign exec_args[i] the value of contents
+  // Loop through args list and assign exec_args[i] the value of contents
   struct list_head *curr;  
   argument *entry; 
   int i = 0; 
