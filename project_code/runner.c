@@ -154,6 +154,15 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
   }
 }
 
+void check_PS1(struct list_head *list_env) {
+  //checks if PS1 is set, if it is then there is no need to set the environment
+  if (get_env(list_env, "PS1") != NULL) {
+    printf(">%s", get_env_value(list_env, "PS1"));  
+  }
+  printf(">"); 
+  fflush(stdout); 
+}
+
 /**
  * @brief Takes a command line from user input and runs it.
  * 
@@ -164,13 +173,13 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
  * @param input The input buffer for fgets
  */
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-  printf("%s", get_env_value(list_env, "PS1")); 
-  fflush(stdout);
+
+  check_PS1(list_env); 
   while(fgets(input, INPUT_LENGTH, stdin)) {
     if(input[0] != '\n'){
       run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input);
     }
-    printf("%s", get_env_value(list_env, "PS1")); 
-    fflush(stdout);
+    check_PS1(list_env);
   }
+
 }

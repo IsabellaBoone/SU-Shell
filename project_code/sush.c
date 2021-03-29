@@ -32,11 +32,6 @@ int main(int argc, char **argv, char **envp) {
   make_env_list(&list_env, envp); //creates a linked list of environment variables
   run_rc_file(&list_commands, &list_env, &list_args,  cmdline, input);
 
-  //checks if PS1 is set, if it is then there is no need to set the environment
-  if (get_env(&list_env, "PS1") == NULL) {
-    set_env(&list_env, "PS1", ">"); 
-  }
-
   //scan for user input
   run_user_input(&list_commands, &list_env, &list_args, cmdline, input, argc); 
   clear_list_env(&list_env); 
