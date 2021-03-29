@@ -18,122 +18,6 @@
 #define BUFFER_SIZE 4096 // Max size of a char*
 
 /**
- * @brief Returns the environment variable name. 
- * 
- * @param contents A string with an environment variable in it (NAME=...). 
- * @return char* The environment variable name. 
- */
-static char * get_env_variable_name(char const *contents) {
-  int len = strlen(contents) + 1; // Length of string + null term
-  char *new_contents = malloc(len * sizeof(char)); // Allocate space for new contents
-  strncpy(new_contents, contents, len); // Copy contents to new contents
-  char *name; // New variable to hold name of environment variable 
-  name = strtok(new_contents, "="); // Strtok at "=" to get name
-  return name; // Return name
-}
-
-/**
- * @brief Get the environment variable value.
- * 
- * @param contents A string with the environment variable in in (NAME=...).
- * @return char* The value of the environment variable. 
- */
-static char * get_env_variable_value(char const *contents) {
-  int len = strlen(contents) + 1; // Length of string + null term
-  char new_contents[BUFFER_SIZE]; // String to hold new contents
-  strncpy(new_contents, contents, len);  // Copy contents to new contents
-  char *value; // New variable to hold value of environment variable 
-  value = strtok(new_contents, "="); // First strtok, should get name (NAME=)
-  value = strtok(NULL, "\0"); // Second strtok, should return everything after = and before \0
-  return value; // Return value
-}
-
-/**
- * @brief Takes the array of environment variables from main and makes a linked list
- * 
- * @param list The list that the environment variables are added to 
- * @param envp The environment variable array that is being made into a list
- */
-void make_env_list(struct list_head *list, char **envp) {
-  int i = 0; 
-  while (envp[i] != NULL) {
-    struct environment *env = malloc(sizeof(struct environment)); 
-    env->contents = strdup(envp[i]); 
-    char *name = get_env_variable_name(env->contents);
-    env->name = name; 
-    list_add_tail(&env->list, list); 
-    i++; 
-  }
-}
-
-/**
- * @brief Takes in the envp array and displays it on the screen. 
- * 
- * @param envp The environment variable array that is displayed. 
- */
-void display_env_array(char **envp) {
-  int i = 0; 
-  // Iterate through envp until a null is reached
-  while (envp[i] != NULL) {
-    printf("%s\n", envp[i]); // Print
-    i++; // Move to next
-  }
-}
-
-/**
- * @brief Given a list head for the list that contains the environment variable it returns the 
- * whole environment variable. 
- * 
- * @param list list_head The list that contains the environment variables.
- * @param name char* The name of the environment variable searched for in the shell's internal environment.
- * @return char* The contents of the envirnment variable or NULL if the environment variable is not there 
- */
-char * get_env(struct list_head *list, char *name) {
-  struct environment *env; // Environnent to look through
-  struct list_head *curr; // Current node
-
-  curr = list->next; // Update node
-  // Iterate through list until we reach the beginning again
-  while (curr != list) {
-    env = list_entry(curr, struct environment, list); // Update environment 
-    curr = curr->next;
-    // If the env name matches the name passed, return the contents
-    if (!strcmp(env->name, name)) { 
-      //return get_env_variable_value(env->contents); 
-       return env->contents;
-    }
-  }
-  return NULL; // If we did not find the environment in the list
-}
-
-/**
- * @brief Given a list head for the list that contains the environment variable it returns the 
- * environment variable value.
- * 
- * @param list list_head The list that contains the environment variables.
- * @param name char* The name of the environment variable searched for in the shell's internal environment.
- * @return char* The value of the envirnment variable or NULL if the environment variable is not there 
- */
-char * get_env_value(struct list_head *list, char *name) {
-  struct environment *env; // Environment to look through 
-  struct list_head *curr; // Current node
-
-  curr = list->next; // Update node
-  // Iterate through list until we reach the beginning again
-  while (curr != list) {
-    env = list_entry(curr, struct environment, list); // Update environment 
-    curr = curr->next; 
-    // If the env name matches the name passed, return the contents
-    if (!strcmp(env->name, name)) { 
-      // Return the value of the variable
-      return get_env_variable_value(env->contents); 
-    }
-  }
-  return NULL; // If we didn't find the environment in the list
-}
-
-
-/**
  * @brief Set an environment variable.
  * 
  * @param list list_head List of environment variables
@@ -205,6 +89,89 @@ int unset_env(struct list_head *list_env, char *name) {
 }
 
 /**
+ * @brief Returns the environment variable name. 
+ * 
+ * @param contents A string with an environment variable in it (NAME=...). 
+ * @return char* The environment variable name. 
+ */
+static char * get_env_variable_name(char const *contents) {
+  int len = strlen(contents) + 1; // Length of string + null term
+  char *new_contents = malloc(len * sizeof(char)); // Allocate space for new contents
+  strncpy(new_contents, contents, len); // Copy contents to new contents
+  char *name; // New variable to hold name of environment variable 
+  name = strtok(new_contents, "="); // Strtok at "=" to get name
+  return name; // Return name
+}
+
+/**
+ * @brief Get the environment variable value.
+ * 
+ * @param contents A string with the environment variable in in (NAME=...).
+ * @return char* The value of the environment variable. 
+ */
+static char * get_env_variable_value(char const *contents) {
+  int len = strlen(contents) + 1; // Length of string + null term
+  char new_contents[BUFFER_SIZE]; // String to hold new contents
+  strncpy(new_contents, contents, len);  // Copy contents to new contents
+  char *value; // New variable to hold value of environment variable 
+  value = strtok(new_contents, "="); // First strtok, should get name (NAME=)
+  value = strtok(NULL, "\0"); // Second strtok, should return everything after = and before \0
+  return value; // Return value
+}
+
+/**
+ * @brief Given a list head for the list that contains the environment variable it returns the 
+ * whole environment variable. 
+ * 
+ * @param list list_head The list that contains the environment variables.
+ * @param name char* The name of the environment variable searched for in the shell's internal environment.
+ * @return char* The contents of the envirnment variable or NULL if the environment variable is not there 
+ */
+char * get_env(struct list_head *list, char *name) {
+  struct environment *env; // Environnent to look through
+  struct list_head *curr; // Current node
+
+  curr = list->next; // Update node
+  // Iterate through list until we reach the beginning again
+  while (curr != list) {
+    env = list_entry(curr, struct environment, list); // Update environment 
+    curr = curr->next;
+    // If the env name matches the name passed, return the contents
+    if (!strcmp(env->name, name)) { 
+      //return get_env_variable_value(env->contents); 
+       return env->contents;
+    }
+  }
+  return NULL; // If we did not find the environment in the list
+}
+
+/**
+ * @brief Given a list head for the list that contains the environment variable it returns the 
+ * environment variable value.
+ * 
+ * @param list list_head The list that contains the environment variables.
+ * @param name char* The name of the environment variable searched for in the shell's internal environment.
+ * @return char* The value of the envirnment variable or NULL if the environment variable is not there 
+ */
+char * get_env_value(struct list_head *list, char *name) {
+  struct environment *env; // Environment to look through 
+  struct list_head *curr; // Current node
+
+  curr = list->next; // Update node
+  // Iterate through list until we reach the beginning again
+  while (curr != list) {
+    env = list_entry(curr, struct environment, list); // Update environment 
+    curr = curr->next; 
+    // If the env name matches the name passed, return the contents
+    if (!strcmp(env->name, name)) { 
+      // Return the value of the variable
+      return get_env_variable_value(env->contents); 
+    }
+  }
+  return NULL; // If we didn't find the environment in the list
+}
+
+/**
  * @brief Frees the environment array. 
  * 
  * @param envp The array that is being freed. 
@@ -254,6 +221,20 @@ void display_env_list(struct list_head *envp_list) {
 }
 
 /**
+ * @brief Takes in the envp array and displays it on the screen. 
+ * 
+ * @param envp The environment variable array that is displayed. 
+ */
+void display_env_array(char **envp) {
+  int i = 0; 
+  // Iterate through envp until a null is reached
+  while (envp[i] != NULL) {
+    printf("%s\n", envp[i]); // Print
+    i++; // Move to next
+  }
+}
+
+/**
  * @brief Make the environment array. 
  * 
  * @param list list_head to make array from.
@@ -276,4 +257,23 @@ char ** make_env_array(struct list_head *list) {
     envp[list_len] = NULL; // Set highest to null, it cannot be accessed. 
 
     return envp; // Return new environment array
+}
+
+/**
+ * @brief Takes the array of environment variables from main and makes a linked list
+ * 
+ * @param list The list that the environment variables are added to 
+ * @param envp The environment variable array that is being made into a list
+ */
+void make_env_list(struct list_head *list, char **envp) {
+  int i = 0; // Used to keep track of which environment we are on
+  // Iterate through 2D array until we reach null (end of 2D array)
+  while (envp[i] != NULL) { 
+    struct environment *env = malloc(sizeof(struct environment)); // Update environment
+    env->contents = strdup(envp[i]); // Copy contents
+    char *name = get_env_variable_name(env->contents); // Get name 
+    env->name = name; // Add name to list
+    list_add_tail(&env->list, list); // Add to tail
+    i++; // Move on to next node
+  }
 }
