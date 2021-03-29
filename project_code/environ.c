@@ -53,12 +53,12 @@ int set_env(struct list_head *list, char *name, char *value) {
   env = malloc(sizeof(struct environment)); // Allocate space for a new environment variable
   env->name = strdup(name); // Add name to environment variable
   //TODO: make funtion 
-  int len = strlen(name) + strlen(value) + 1 + 1; // Length of strings + null terms
+  int len = strlen(name) + strlen(value); // Length of strings + null terms
   env->contents = malloc(len * sizeof(char));  // Allocate to fit new contents
-  strcat(env->contents, name); // Copy new name 
+  strcpy(env->contents, name); // Copy new name 
   strcat(env->contents, "=");  // Copy equals sign
   strcat(env->contents, value);  // Copy value
-  list_add(&env->list, list); // Add environment to tail
+  list_add_tail(&env->list, list); // Add environment to tail
   return 0; // Return 0 for success
 }
 

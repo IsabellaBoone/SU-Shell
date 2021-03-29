@@ -110,8 +110,10 @@ void run_parser_executor_handler(struct list_head *list_commands, struct list_he
     if(internal_code == 1) { 
       char **new_envp = make_env_array(list_env); 
       run_command(cmdline.num, list_commands, new_envp);
-      int list_len = getListLength(list_env); 
-      free_env_array(new_envp, list_len);  
+      clear_list_env(list_env); 
+      make_env_list(list_env, new_envp);
+      int list_env_len = getListLength(list_env); 
+      free_env_array(new_envp, list_env_len);  
     } else if (internal_code == 6) {  //if internal code was to exit
       freeing_on_exit(list_commands, list_env, cmdline);
       exit(0);
@@ -134,22 +136,22 @@ void run_parser_executor_handler(struct list_head *list_commands, struct list_he
  */
 void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
 
-if(sushhome_exists(list_env)){
-  struct stat sb; //Keep track of information regarding the .sushrc file
-  char* sushhome = get_env_value(list_env, "SUSHHOME"); //Get location to look for sushrc 
-  int stat_status = stat(sushhome, &sb);
-  if ((sb.st_mode & S_IRUSR) && (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
-    FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
-    if (file == NULL) {
-      return; 
+  if(sushhome_exists(list_env)){
+    struct stat sb; //Keep track of information regarding the .sushrc file
+    char* sushhome = get_env_value(list_env, "SUSHHOME"); //Get location to look for sushrc 
+    int stat_status = stat(sushhome, &sb);
+    if ((sb.st_mode & S_IRUSR) && (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
+      FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
+      if (file == NULL) {
+        return; 
+      }
+      //read from file and execute commands 
+      while (fgets(input, INPUT_LENGTH-1, file)) {
+        run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input); 
+      } 
+      int flcose_status = fclose(file); 
     }
-    //read from file and execute commands 
-    while (fgets(input, INPUT_LENGTH-1, file)) {
-      run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input); 
-    } 
-    int flcose_status = fclose(file); 
   }
-}
 }
 
 /**
