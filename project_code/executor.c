@@ -12,6 +12,7 @@
  */
 #define _GNU_SOURCE
 #include <sys/wait.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -20,6 +21,7 @@
 #include <stdio.h> // for input/output
 
 #include "executor.h"
+#include "error.h"
 
 /**
  * @brief Handles the execution of the child process 
@@ -30,7 +32,7 @@
  */
 void handleChildInExecutor(char *command, char *const *args, char **env) {
   pid_t pid2 = execvpe(command, args, env); // Execute command 
-  perror("The process failed to execute"); // Should only be reaches when error happens with execvpe
+  fprintf(stderr, ERROR_EXEC_FAILED, strerror(errno)); // Should only be reaches when error happens with execvpe
   exit(-1); // Exit with error 
 }
 
@@ -50,8 +52,9 @@ void handleParentInExecutor(pid_t pid, int option) {
  * @brief Handles getting input from a file, outputting to a file for commands. 
  *
  * @param subcmd The command who's input and output is being handled. 
+ * @return int Returns -1 for error, 0 no error
  */
-static void handle_input_output(struct subcommand *subcmd) {
+static int handle_input_output(struct subcommand *subcmd) {
   // If subcmd->output is anything other than stdout (default)
   if (strcmp(subcmd->output, "stdout") != 0) {
     const char *filename = subcmd->output; // Get filename
@@ -72,9 +75,16 @@ static void handle_input_output(struct subcommand *subcmd) {
   } if (strcmp(subcmd->input, "stdin") != 0) {
     const char *filename = subcmd->input; // Get filename
     int fd = open(filename, O_RDONLY); // File descriptor, open file read only
-    close(STDIN_FILENO); // Close STDIN
-    dup2(fd, STDIN_FILENO); // Connect FD and STDIN
+    if (fd == -1) {
+        fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno)); 
+        close(fd); 
+        return -1; 
+    } else {
+      close(STDIN_FILENO); // Close STDIN
+      dup2(fd, STDIN_FILENO); // Connect FD and STDIN
+    }
   }
+  return 0; 
 }
 
 /**
@@ -88,8 +98,9 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
 
   if (pid == 0) { // Child process 
     // if there is output
-    handle_input_output(subcmd); 
-    handleChildInExecutor(command, args, env); 
+   if ( handle_input_output(subcmd) != -1) {
+      handleChildInExecutor(command, subcmd->exec_args, env);
+    }
   } else { // Parent process 
     handleParentInExecutor(pid, 0); 
   }
@@ -156,9 +167,10 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
           dup2(prev_output, 0); // Read final pipe from parent
           close(prev_output); // close for safety
         }
-                
-        handle_input_output(entry); 
-        handleChildInExecutor(command, entry->exec_args, env);
+                 
+        if ( handle_input_output(entry) != -1) {
+          handleChildInExecutor(command, entry->exec_args, env);
+        }
                 
       } else { // Parent process
         prev_output=pipes[0]; //get output from the child, and ensure that we can save it for next child

@@ -58,7 +58,7 @@ int set_env(struct list_head *list, char *name, char *value) {
   strcat(env->contents, name); // Copy new name 
   strcat(env->contents, "=");  // Copy equals sign
   strcat(env->contents, value);  // Copy value
-  list_add_tail(&env->list, list); // Add environment to tail
+  list_add(&env->list, list); // Add environment to tail
   return 0; // Return 0 for success
 }
 
@@ -273,7 +273,7 @@ void make_env_list(struct list_head *list, char **envp) {
     env->contents = strdup(envp[i]); // Copy contents
     char *name = get_env_variable_name(env->contents); // Get name 
     env->name = name; // Add name to list
-    list_add_tail(&env->list, list); // Add to tail
+    list_add(&env->list, list); // Add to tail
     i++; // Move on to next node
   }
 }

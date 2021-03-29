@@ -144,7 +144,7 @@ if(sushhome_exists(list_env)){
       return; 
     }
     //read from file and execute commands 
-    while (fgets(input, INPUT_LENGTH-1, file)!= NULL) {
+    while (fgets(input, INPUT_LENGTH-1, file)) {
       run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input); 
     } 
     int flcose_status = fclose(file); 
@@ -162,13 +162,13 @@ if(sushhome_exists(list_env)){
  * @param input The input buffer for fgets
  */
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-  while(fgets(input, INPUT_LENGTH, stdin) != NULL) {
+  while(fgets(input, INPUT_LENGTH, stdin)) {
     if(input[0] != '\n'){
       printf("%s", get_env_value(list_env, "PS1")); 
       fflush(stdout);
       run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input);
-      printf("%s", get_env_value(list_env, "PS1")); 
-      fflush(stdout);
+      // printf("%s", get_env_value(list_env, "PS1")); 
+      // fflush(stdout);
     }
   }
 }
