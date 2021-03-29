@@ -157,9 +157,10 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 void check_PS1(struct list_head *list_env) {
   //checks if PS1 is set, if it is then there is no need to set the environment
   if (get_env(list_env, "PS1") != NULL) {
-    printf(">%s", get_env_value(list_env, "PS1"));  
-  }
-  printf(">"); 
+    printf("%s", get_env_value(list_env, "PS1"));  
+  } else {
+    printf(">");
+  } 
   fflush(stdout); 
 }
 
