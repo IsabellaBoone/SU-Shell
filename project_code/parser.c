@@ -41,14 +41,6 @@
   free(entry); \
 }) 
 
-// void delete_file(argument *entry, char **path, struct list_head *curr) {
-//   entry = list_entry(curr, argument, list); 
-//   curr = curr->next; 
-//   path = entry->contents; 
-//   list_del(&entry->list); 
-//   free(entry); 
-// }
-
 /**
  * @brief Current state on parser 
  */
@@ -92,7 +84,7 @@ int find_num_subcommands(char input[], int len)
  * @param sentence char * destination to copy to
  * @param i which sentence in subcommand to copy
  */
-void copy_subcommand(char **subcommand, char *destination, int i)
+static void copy_subcommand(char **subcommand, char *destination, int i)
 {
   strcpy(subcommand[i], destination); // Copy subcommand to destination
 }
@@ -122,31 +114,6 @@ void copy_subcommands(char input[], int num, char **subcommand)
 
       cmd = strtok(NULL, "|"); 
     }
-  }
-}
-
-/**
- * @brief Print number of subcommands in the input
- * @author Hannah Moats 
- * 
- * @param num int number of subcommands
- */
-void print_num_subcommands(int num)
-{
-  printf("num: %d\n", num); // Print number of subcommands
-}
-
-/**
- * @brief Print subcommand in correct form. 
- * 
- * @param num number of commands in subcommands
- * @param subcommands 2D char array of subcommands to print 
- */
-void print_subcommands(int num, char **subcommands)
-{
-  for (int i = 0; i < num; i++)
-  {
-    printf("%d : (%s)\n", i, subcommands[i]);
   }
 }
 
@@ -511,10 +478,15 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
         if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
-          while (commandline->subcommand[i][j] != QUOTATIONMARK)
+          while (commandline->subcommand[i][j] != QUOTATIONMARK && j < strlen(commandline->subcommand[i]))
           {
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;
+          }
+          if (j >= strlen(commandline->subcommand[i])) {
+            free_malloced_parser_values(list_args, temp); 
+            fprintf(stderr, ERROR_INVALID_CMDLINE); 
+            return -1; 
           }
 
           add_arg_to_list(temp, NORMAL, arg, list_args);
