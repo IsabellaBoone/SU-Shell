@@ -45,7 +45,7 @@ void handleChildInExecutor(char *command, char *const *args, char **env) {
 void handleParentInExecutor(pid_t pid, int option) {
   int status; 
   waitpid(pid, &status, option); // Wait for child to die
-  //printf("Child exited: %d\n", status);
+  // printf("Child exited: %d\n", status);
 }
 
 /**
@@ -106,16 +106,6 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
 
 }
 
-/**
- * @brief Signal Handler for the parent process. Triggers a wait that reaps children.
- * @author John Gable (implemented pipes)
- * 
- * @param signum signal number (SIGCHLD)
- */
-void sig_handle(int signum)
-{
-    wait(NULL);
-}
 
 
 /**
@@ -129,7 +119,7 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
   struct list_head *curr;  
 
   // If we have more than one subcommand
-  /*
+  
   if(subcommand_count>=2){
     int i=0; // Keep track of what subcommand we are on
     int prev_output=0; // We need this to hold the child output for our loop
@@ -143,44 +133,61 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
       entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
       char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char)); // Allcoate space for command
 
-      // command becomes: /bin/<command> 
+      // command becomes: <command> 
       strcat(command, entry->exec_args[0]); 
 
-      // executes a basic command
-      int pipe_code = pipe(pipes);
+      // make pipes
+      if(i<subcommand_count-1){
+        int pipe_code = pipe(pipes);
 
-      // If there was an error creating pipes
-      if(pipe_code < 0){
-        perror("Could not create pipes.\n");
-        return;
+        // If there was an error creating pipes
+        if(pipe_code < 0){
+          perror("Could not create pipes.\n");
+          return;
+        }
       }
+      
     
       pid_t pid = fork(); 
 
       if (pid == 0) { // Child process 
         if(i<subcommand_count-1){ // All children except the last must write to parent
-          dup2(prev_output, 0); // read prev_output set by parent (initially empty)
-          close(prev_output); // close for safety
-          dup2(pipes[1], 1); // write output back to parent
-          close(pipes[1]); // close for safety
+          dup2(prev_output, STDIN_FILENO); // read prev_output set by parent (initially empty)
+          dup2(pipes[1], STDOUT_FILENO); // write output back to parent
+          close(prev_output);
+          close(pipes[0]);
+          close(pipes[1]);
         }else{ // The last child doesnt output to the parent for the loop 
-          dup2(prev_output, 0); // Read final pipe from parent
-          close(prev_output); // close for safety
+          dup2(prev_output, STDIN_FILENO); // Read final pipe from parent
+          close(prev_output);
+          close(pipes[0]);
+          close(pipes[1]);
         }
                  
         if ( handle_input_output(entry) != -1) {
           handleChildInExecutor(command, entry->exec_args, env);
+          close(prev_output);
+          close(pipes[0]);
+          close(pipes[1]);
         }
                 
       } else { // Parent process
         prev_output=pipes[0]; //get output from the child, and ensure that we can save it for next child
-        signal(SIGCHLD, sig_handle);
+         
+        if(i==subcommand_count-1){
+          close(prev_output);
+          close(pipes[0]);
+          close(pipes[1]); 
+        }
+        
+        int status;
+        waitpid(pid, &status, 0);
       }
+
       i++;
       free(command); 
     }
   }else{ // Else, if we only have one command
-  */
     curr = list_commands->next; 
     entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
     char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char));
@@ -189,5 +196,5 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
     execute(command, entry->exec_args, entry, env); // Execute command
     free(command); 
 
-  //}
+  }
 }
