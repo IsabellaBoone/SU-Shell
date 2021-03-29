@@ -386,12 +386,13 @@ static void make_subcommand(struct list_head *list_commands, struct list_head *l
 }
 
 
-void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
+void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args, int *space_count){
   arg = malloc(sizeof(argument)); 
   arg->contents = strdup(temp); // Copy temp to contents
   arg->token = token; // Set token to normal
   list_add_tail(&arg->list, list_args); // Add to the end of the list
   memset(temp, 0, 50);
+  *space_count = 0; 
 }
 
 /**
@@ -402,29 +403,79 @@ void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *lis
  * @param total_cmds The total number of subcommands on the commandline
  * @return int Returns -1, if command line error, else returns 0 with no error 
  */
-static int check_validity_of_cmdline_redirects(struct list_head *list_args, int total_cmds, int current_cmd, int stdin, int stdout) {
+static int check_validity_of_cmdline_redirects(struct list_head *list_args, int total_cmds, int current_cmd, int stdins, int stdouts) {
   if (total_cmds == 1) {
     //can't have two standard outs 
     //can't have more than one standard ins
-    if (stdin > 1 || stdout > 1) {
+    if (stdins > 1 || stdouts > 1) {
       fprintf(stderr, ERROR_INVALID_CMDLINE); 
       return -1; 
     }
   } else if (total_cmds > 1 && current_cmd == 1) { 
-    if (stdin > 1 || stdout != 0) {
+    if (stdins > 1 || stdouts != 0) {
       fprintf(stderr, ERROR_INVALID_CMDLINE);
       return -1;
     }
   } else if (total_cmds > 1 && current_cmd < total_cmds) {
-    if (stdin != 0 || stdout != 0) {
+    if (stdins != 0 || stdouts != 0) {
       fprintf(stderr, ERROR_INVALID_CMDLINE);
       return -1; 
     }
   } else if (total_cmds > 1 && current_cmd == total_cmds) {
-    if (stdin != 0 || stdout > 1) {
+    if (stdins != 0 || stdouts > 1) {
       fprintf(stderr, ERROR_INVALID_CMDLINE);
       return -1; 
     }
+  }
+  return 0; 
+}
+
+/**
+ * @brief Frees the argument list used to store the parsed argument values. 
+ * Frees the temp value used in scanning the arguments. 
+ * 
+ * @param list_args The list of parsed arguments. 
+ * @param temp The temporary buffer. 
+ */
+void free_malloced_parser_values(struct list_head *list_args, char *temp) {
+  clear_list_argument(list_args); 
+  free(temp);
+  return; 
+}
+
+/**
+ * @brief Checks to ensure that the second character after the redirect is not a space. 
+ * If it is a space then there is an error. 
+ * 
+ * @param list_args The list of arguments being freed, if error
+ * @param temp The char pointer being freed, if error
+ * @param check_char The character that is being checked.
+ * @return int Returns -1 on error, else returns 0
+ */
+static int space_check_after_redirect(struct list_head *list_args, char *temp, char check_char) {
+  if (is_whitespace(check_char) == 1) { //check for spacing after the input redir
+    fprintf(stderr, ERROR_INVALID_CMDLINE); 
+    free_malloced_parser_values(list_args, temp); 
+    return -1;
+  }
+  return 0; 
+}
+
+/**
+ * @brief Checked the number of spaces before the redirect, should be one. If the
+ * number of spaces is greater than one then there is an error.
+ * 
+ * @author Hannah Moats 
+ * @param list_args The list of arguments to be freed if there is an error.
+ * @param temp The char pointer, that needs freed if there is an error. 
+ * @param space_count The number of spaces, before the redirect. 
+ * @return int Returns -1 if there is an error, else returns 0. 
+ */
+static int space_check_before_redirect(struct list_head *list_args, char *temp, int space_count) {
+  if (space_count > 1) { //more than one space around a redirect throw error
+    fprintf(stderr, ERROR_INVALID_CMDLINE);
+    free_malloced_parser_values(list_args, temp);  
+    return -1; 
   }
   return 0; 
 }
@@ -454,7 +505,7 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
   {
     redirect_in_count = 0; 
     redirect_out_count = 0; 
-    space_count = 0; 
+    space_count = -1; //minus 1 since the initial state is whitespace
     // For every character in the subcommand
     for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
       char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
@@ -464,21 +515,29 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
       if (current_characters_state == CHARACTER || current_characters_state == REDIR) {
         // If we encounter redirect symbol
         if (current_character == REDIR_OUT) {
-
+          if (space_check_before_redirect(list_args, temp, space_count) == -1) {
+            return -1; 
+          }
           if(strlen(temp)>0){
-            add_arg_to_list(temp, NORMAL, arg, list_args);
+            add_arg_to_list(temp, NORMAL, arg, list_args, &space_count);
           }
 
           // If we encounter two arrow redir_out symbol ">>"
           if (commandline->subcommand[i][j + 1] == REDIR_OUT) {
+            if (space_check_after_redirect(list_args, temp, commandline->subcommand[i][j+3]) == -1) {
+              return -1; 
+            }
             strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
-            add_arg_to_list(temp, REDIRECT_OUTPUT_APPEND, arg, list_args);
+            add_arg_to_list(temp, REDIRECT_OUTPUT_APPEND, arg, list_args, &space_count);
             j++;
             redirect_out_count++; 
           } else {
+            if (space_check_after_redirect(list_args, temp, commandline->subcommand[i][j+2]) == -1) {
+              return -1; 
+            }
             // Otherwise, we only encountered one redir_out '>'
             strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
-            add_arg_to_list(temp, REDIRECT_OUTPUT_TRUNCATE, arg, list_args);
+            add_arg_to_list(temp, REDIRECT_OUTPUT_TRUNCATE, arg, list_args, &space_count);
             redirect_out_count++; 
           }
         } else if (current_character == REDIR_IN) {
@@ -486,14 +545,20 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
 
           //If the temp var already has an argument in it prior to redir_in
           if(strlen(temp)>0){
-            add_arg_to_list(temp, NORMAL, arg, list_args);
+            add_arg_to_list(temp, NORMAL, arg, list_args, &space_count);
           }
           
-          strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
-
-          //Always add the redir_in to the list
-          add_arg_to_list(temp, REDIRECT_INPUT, arg, list_args);
-          redirect_in_count++; 
+          strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp 
+          if (space_check_before_redirect(list_args, temp, space_count) != -1) { 
+            if (space_check_after_redirect(list_args, temp, commandline->subcommand[i][j + 2]) == -1) { 
+              return -1; 
+            }
+            //Always add the redir_in to the list
+            add_arg_to_list(temp, REDIRECT_INPUT, arg, list_args, &space_count);
+            redirect_in_count++;
+          } else { //else invalid spacing 
+            return -1; 
+          }
           
         } else {
           // Current char is a character
@@ -502,14 +567,15 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
 
           // if we found the last word, and it has no space after, add it to the list
           if (j == (strlen(commandline->subcommand[i]) - 1)) {
-            add_arg_to_list(temp, NORMAL, arg, list_args);
+            add_arg_to_list(temp, NORMAL, arg, list_args, &space_count);
           }
         } 
       } else if (current_characters_state == WHITESPACE) {
         // If we see a space or tab
         space_count++; 
         if (currentState != WHITESPACE) {
-          add_arg_to_list(temp, NORMAL, arg, list_args);  //add the current content of temp to the list of args
+          add_arg_to_list(temp, NORMAL, arg, list_args, &space_count);  //add the current content of temp to the list of args
+          space_count++; 
           currentState = WHITESPACE;
           word_count++;                    //increment which word we are on
         }
@@ -523,7 +589,7 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
             j++;
           }
 
-          add_arg_to_list(temp, NORMAL, arg, list_args);
+          add_arg_to_list(temp, NORMAL, arg, list_args, &space_count);
           currentState = WHITESPACE;
         }
       }
@@ -537,7 +603,7 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
 
     int error_check = check_validity_of_cmdline_redirects(list_args, commandline->num, i + 1, redirect_in_count, redirect_out_count); 
     if (error_check == -1) {
-      clear_list_argument(list_args); 
+      free_malloced_parser_values(list_args, temp); 
       return -1; 
     }
     //Makes a subcomamnd, then clears the list_args so that more args can be scanned
