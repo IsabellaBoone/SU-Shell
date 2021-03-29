@@ -92,7 +92,7 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 }
 
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-    // while(1) {
+    //while(1) {
         
         
         fgets(input, INPUT_LENGTH, stdin);
@@ -130,7 +130,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
             fflush(stdout);
         }
 
-    // }
+    //}
 }
 
 //void run_file_input();

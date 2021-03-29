@@ -93,6 +93,18 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
 }
 
 /**
+ * @brief Signal Handler for the parent process. Triggers a wait that reaps children.
+ * @author John Gable (implemented pipes)
+ * 
+ * @param signum signal number (SIGCHLD)
+ */
+void sig_handle(int signum)
+{
+    wait(NULL);
+}
+
+
+/**
  * @brief Runs the command typed on the command line including pipes
  * @author Hannah Moats 
  * @author John Gable (implemented pipes)
@@ -102,69 +114,61 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
  * @param list_args The linked list of args that are being executed 
  */
 void run_command(int subcommand_count, struct list_head *list_commands, char **env) {
-    //printf("length of list: %d - Subcommand Count: %d\n", len, subcommand_count); 
     struct subcommand *entry; 
 
-    // if(subcommand_count>=2){
-    //     // //initializes an array of character pointers that will be passed to exec()
-    //     // char **exec_arg_list = malloc(new_length * sizeof(char *)); 
+    if(subcommand_count>=2){
+        // //initializes an array of character pointers that will be passed to exec()
+        // char **exec_arg_list = malloc(new_length * sizeof(char *)); 
         
-    //     //Loops through each subcommand and executes
-    //     struct list_head *curr;  
-    //     int i=0;
-    //     int prev_output=0;  //we need this to hold the child output for our loop
-    //     int pipes[2];   //standard pipes
+        //Loops through each subcommand and executes
+        struct list_head *curr;  
+        int i=0;
+        int prev_output=0;  //we need this to hold the child output for our loop
+        int pipes[2];   //standard pipes
 
-    //     for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
-    //         //Looks at one subcommand 
-    //         entry = list_entry(curr, struct subcommand, list); 
-    //         char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
+        for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
+            //Looks at one subcommand 
+            entry = list_entry(curr, struct subcommand, list); 
+            char *command = calloc((1 + strlen(entry->exec_args[0])),  sizeof(char));
 
-    //         // command becomes: /bin/<command> 
-    //         strcat(command, entry->exec_args[0]); 
+            // command becomes: /bin/<command> 
+            strcat(command, entry->exec_args[0]); 
 
-    //         // executes a basic command
+            // executes a basic command
             
-    //         int pipe_code = pipe(pipes);
-    //         if(pipe_code < 0){
-    //             perror("Could not create pipes.\n");
-    //             return;
-    //         }
+            int pipe_code = pipe(pipes);
+            if(pipe_code < 0){
+                perror("Could not create pipes.\n");
+                return;
+            }
 
             
-    //         pid_t pid = fork(); 
+            pid_t pid = fork(); 
             
 
-    //         if (pid == 0) { //Child process 
-    //             if(i<subcommand_count-1){   //All children except the last must write to parent
-    //                 dup2(prev_output, 0);   //read prev_output set by parent (initially empty)
-    //                 close(prev_output);     //close for safety
-    //                 dup2(pipes[1], 1);      //write output back to parent
-    //                 close(pipes[1]);        //close for safety
-    //             }else{  //The last child doesnt output to the parent for the loop 
-    //                 dup2(prev_output, 0);   //Read final pipe from parent
-    //                 close(prev_output);     //close for safety
-    //             }
-
-    //             handle_input_output(entry);
-    //             //handleChildInExecutor(command, entry->exec_args, env);
+            if (pid == 0) { //Child process 
+                if(i<subcommand_count-1){   //All children except the last must write to parent
+                    dup2(prev_output, 0);   //read prev_output set by parent (initially empty)
+                    close(prev_output);     //close for safety
+                    dup2(pipes[1], 1);      //write output back to parent
+                    close(pipes[1]);        //close for safety
+                }else{  //The last child doesnt output to the parent for the loop 
+                    dup2(prev_output, 0);   //Read final pipe from parent
+                    close(prev_output);     //close for safety
+                }
                 
-    //             execvpe(command, entry->exec_args, env);
-    //             perror("The process failed to execute"); //Should we handle an error here if we are unable to 
-    //             exit(-1); 
+                handle_input_output(entry);
+                handleChildInExecutor(command, entry->exec_args, env);
+                
+            } else {  //Parent process
+                prev_output=pipes[0];   //get output from the child, and ensure that we can save it for next child
+                signal(SIGCHLD, sig_handle);
+            }
 
-    //         } else {  //Parent process
-    //             prev_output=pipes[0];   //get output from the child, and ensure that we can save it for next child
-
-    //             // close(pipes[0]);
-    //             // close(pipes[1]); 
-    //             handleParentInExecutor(pid, 0);
-    //         }
-
-    //         i++;
-    //         free(command); 
-    //     }
-    // }else{
+            i++;
+            free(command); 
+        }
+    }else{
         struct list_head *curr;  
         for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
             //Looks at one subcommand 
@@ -177,5 +181,5 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
             free(command); 
         }
 
-   // }
+   }
 }
