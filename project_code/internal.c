@@ -108,6 +108,8 @@ static int handle_setenv(struct subcommand *subcommand, struct list_head *list_e
   char *name = get_second_argument(subcommand); 
   char *value = get_third_argument(subcommand); 
   set_env(list_env, name, value); 
+  int status = setenv(name, value, 1); 
+  //printf("setenv stat: %d\n", status); 
   return 0; 
 }
 
@@ -125,15 +127,17 @@ static int handle_getenv(struct subcommand *subcommand, struct list_head *list_e
     display_env_list(list_env); 
   } else if (num_args == 2) { //subcommmand: getenv $NAME
     char *name = get_second_argument(subcommand); 
-    char *env = get_env(list_env, name); 
+    char *env_list = get_env(list_env, name); 
+    char *env = getenv(name); 
 
     //error check
-    if (env == NULL) {
+    if (env_list == NULL) {
       fprintf(stderr, ERROR_GETENV_INVALID, name); 
       return -1; 
     }
 
-    printf("%s\n", env); 
+    //printf("list: %s\n", env_list); 
+    //printf("internal: %s\n", env); 
   } else { //error: there ere not enough arguments or too many 
     fprintf(stderr, ERROR_GETENV_ARG);
     return -1; 
@@ -157,6 +161,7 @@ static int handle_unsetenv(struct subcommand *subcommand, struct list_head *list
   }
   char *name = get_second_argument(subcommand); 
   int status = unset_env(list_env, name); 
+  status = unsetenv(name); 
   
   return 0;
 }

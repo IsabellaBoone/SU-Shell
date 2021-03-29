@@ -76,8 +76,7 @@ static int handle_input_output(struct subcommand *subcmd) {
     const char *filename = subcmd->input; // Get filename
     int fd = open(filename, O_RDONLY); // File descriptor, open file read only
     if (fd == -1) {
-        fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno)); 
-        close(fd); 
+        fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno));  
         return -1; 
     } else {
       close(STDIN_FILENO); // Close STDIN
