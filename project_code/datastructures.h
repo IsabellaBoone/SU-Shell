@@ -86,15 +86,6 @@ struct subcommand {
 int find_num_subcommands(char input[], int len);
 
 /**
- * @brief Copy an individual subcommand to a pointer
- * 
- * @param subcommand 2D char array to copy from.
- * @param sentence char * destination to copy to
- * @param i which sentence in subcommand to copy
- */
-void copy_subcommand(char **subcommand, char *destination, int i);
-
-/**
  * @brief Copy a String of subcommands into a 2D array of subcommands. 
  * 
  * @param input String to break apart
@@ -102,37 +93,6 @@ void copy_subcommand(char **subcommand, char *destination, int i);
  * @param subcommand 2D char array to copy subcommands into
  */
 void copy_subcommands(char input[], int num, char **subcommand);
-
-/**
- * @brief Print number of subcommands in the input
- * 
- * @param num int number of subcommands
- */
-void print_num_subcommands(int num);
-
-
-/**
- * @brief Print subcommand in correct form. 
- * 
- * @param num number of commands in subcommands
- * @param subcommands 2D char array of subcommands to print 
- */
-void print_subcommands(int num, char **subcommands);
-
-/**
- * @brief Traverse through linked list and free it from memory
- * after deleting each node entry. 
- * 
- * @param list struct list_head to clear
- */
-void clear_list_argument(struct list_head *list);
-
-/**
- * @brief Navigate through list and print contents to console. 
- * 
- * @param list struct list_head to print
- */
-void display_list(struct list_head *list);
 
 /**
  * @brief Creates a list of commands, or subcommand structs, where each 
