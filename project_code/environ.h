@@ -24,7 +24,6 @@ void display_env_list(struct list_head *list);
 void display_env_array(char **envp); 
 char ** make_env_array(struct list_head *list); 
 void make_env_list(struct list_head *list, char **envp);  
-void free_env_list(struct list_head *list);
 void free_env_array(char **envp, int len); 
 char * get_env(struct list_head *list, char *name); 
 char * get_env_value(struct list_head *list, char *name);

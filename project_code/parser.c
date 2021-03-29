@@ -21,6 +21,7 @@
 #include "list.h"
 #include "datastructures.h"
 #include "internal.h"
+#include "error.h"
 
 #define MAX_BUFFER 4096
 
@@ -378,11 +379,57 @@ void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *lis
   memset(temp, 0, 50);
 }
 
+/**
+ * @brief Ensures that the commandline appropiately uses the redirect operators. 
+ * @author Hannah Moats 
+ * 
+ * @param args The current commandline argument being evaluated 
+ * @param total_cmds The total number of subcommands on the commandline
+ * @return int Returns -1, if command line error, else returns 0 with no error 
+ */
+static int check_validity_of_cmdline_redirects(struct list_head *list_args, int total_cmds, int current_cmd, int stdin, int stdout) {
+  if (total_cmds == 1) {
+    //can't have two standard outs 
+    //can't have more than one standard ins
+    if (stdin > 1 || stdout > 1) {
+      fprintf(stderr, ERROR_INVALID_CMDLINE); 
+      return -1; 
+    }
+  } else if (total_cmds > 1 && current_cmd == 1) { 
+    if (stdin > 1 || stdout != 0) {
+      fprintf(stderr, ERROR_INVALID_CMDLINE);
+      return -1;
+    }
+  } else if (total_cmds > 1 && current_cmd < total_cmds) {
+    if (stdin != 0 || stdout != 0) {
+      fprintf(stderr, ERROR_INVALID_CMDLINE);
+      return -1; 
+    }
+  } else if (total_cmds > 1 && current_cmd == total_cmds) {
+    if (stdin != 0 || stdout > 1) {
+      fprintf(stderr, ERROR_INVALID_CMDLINE);
+      return -1; 
+    }
+  }
+  return 0; 
+}
 
-void parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands)
+/**
+ * @brief Creates a list of commands, or subcommand structs, where each 
+ * subcommand is parsed and marked with the appropiate input and output. 
+ * 
+ * @param list_args A list used to store the parsed arguments of a subcommand
+ * @param commandline The struct which stores unparsed subcommands, and number of subcommands. 
+ * @param list_commands The list that stores the subcommands 
+ * @return int Returns -1 if there was an error, else returns 0
+ */
+int parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands)
 {
   int word_count = 0; //Count for how many words we have parsed out of the commandline sentences
   int currentState = WHITESPACE; // Start in whitespace state by default
+  int redirect_in_count = 0; 
+  int redirect_out_count = 0; 
+  int space_count = 0; 
 
   char *temp = calloc(100, sizeof(char)); // Temporary word variable
   argument *arg; // Linked List of arguments
@@ -390,6 +437,9 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
   // For every subcommand 
   for (int i = 0; i < commandline->num; i++)
   {
+    redirect_in_count = 0; 
+    redirect_out_count = 0; 
+    space_count = 0; 
     // For every character in the subcommand
     for (int j = 0; j < strlen(commandline->subcommand[i]); j++){
       char current_character = commandline->subcommand[i][j]; // Purely for readability's sake
@@ -404,18 +454,18 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
             add_arg_to_list(temp, NORMAL, arg, list_args);
           }
 
-          // If we encounter two redir_in symbols ">>"
+          // If we encounter two arrow redir_out symbol ">>"
           if (commandline->subcommand[i][j + 1] == REDIR_OUT) {
             strncat(temp, &commandline->subcommand[i][j], 2); // Copy symbols to temp
             add_arg_to_list(temp, REDIRECT_OUTPUT_APPEND, arg, list_args);
             j++;
+            redirect_out_count++; 
           } else {
-            // Otherwise, we only encountered one redir_in '>'
+            // Otherwise, we only encountered one redir_out '>'
             strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
             add_arg_to_list(temp, REDIRECT_OUTPUT_TRUNCATE, arg, list_args);
+            redirect_out_count++; 
           }
-
-          
         } else if (current_character == REDIR_IN) {
           // If we encounter the redirect output symbol
 
@@ -424,11 +474,11 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
             add_arg_to_list(temp, NORMAL, arg, list_args);
           }
           
-          
           strncat(temp, &commandline->subcommand[i][j], 1); // Copy symbol to temp
 
           //Always add the redir_in to the list
           add_arg_to_list(temp, REDIRECT_INPUT, arg, list_args);
+          redirect_in_count++; 
           
         } else {
           // Current char is a character
@@ -442,6 +492,7 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
         } 
       } else if (current_characters_state == WHITESPACE) {
         // If we see a space or tab
+        space_count++; 
         if (currentState != WHITESPACE) {
           add_arg_to_list(temp, NORMAL, arg, list_args);  //add the current content of temp to the list of args
           currentState = WHITESPACE;
@@ -463,17 +514,22 @@ void parse_commandline(struct list_head *list_args, commandline *commandline, st
       }
     }
     //The req specify ending the list of arguements with a NULL for exec
-
     
     arg = malloc(sizeof(argument));
     arg->contents = strdup("\0");
     arg->token = NORMAL;
     list_add_tail(&arg->list, list_args);
 
+    int error_check = check_validity_of_cmdline_redirects(list_args, commandline->num, i + 1, redirect_in_count, redirect_out_count); 
+    if (error_check == -1) {
+      clear_list_argument(list_args); 
+      return -1; 
+    }
     //Makes a subcomamnd, then clears the list_args so that more args can be scanned
     //at this point list_args == "ls" "-l" "\0" 
     make_subcommand(list_commands, list_args); 
     clear_list_argument(list_args); 
   }
   free(temp);
+  return 0; 
 }

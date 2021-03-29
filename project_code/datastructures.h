@@ -135,11 +135,14 @@ void clear_list_argument(struct list_head *list);
 void display_list(struct list_head *list);
 
 /**
- * @brief Parse through a list of arguments character by character. 
+ * @brief Creates a list of commands, or subcommand structs, where each 
+ * subcommand is parsed and marked with the appropiate input and output. 
  * 
- * @param list_args List of arguments to parse through
- * @param commandline to be parsed through
+ * @param list_args A list used to store the parsed arguments of a subcommand
+ * @param commandline The struct which stores unparsed subcommands, and number of subcommands. 
+ * @param list_commands The list that stores the subcommands 
+ * @return int Returns -1 if there was an error, else returns 0
  */
-void parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands);
+int parse_commandline(struct list_head *list_args, commandline *commandline, struct list_head *list_commands);
 
 #endif

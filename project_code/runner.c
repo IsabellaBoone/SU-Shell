@@ -92,9 +92,7 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 }
 
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-    //while(1) {
-        
-        
+    while(1) {
         fgets(input, INPUT_LENGTH, stdin);
         if(input[0] != '\n'){
             //printf("%s", get_env(list_env, "PS1")); 
@@ -108,18 +106,20 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
             //creates an array of pointers, in proportion to the number of subcommands
             cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
             copy_subcommands(input, cmdline.num, cmdline.subcommand);
-            parse_commandline(list_args, &cmdline, list_commands);
+            int valid_cmdlin = parse_commandline(list_args, &cmdline, list_commands);
             
-            //Checks if an internal command, if it is then it is run, else a normal command is run
-            int internal_code = handle_internal(list_commands, list_env);
-            if(internal_code == 1) {
-                char **new_envp = make_env_array(list_env); 
-                run_command(cmdline.num, list_commands, new_envp);
-                int list_len = getListLength(list_env); 
-                free_env_array(new_envp, list_len);  
-            } else if (internal_code == 6) { //TODO: is this alright?
-                freeing_on_exit(list_commands, list_env, cmdline);
-                exit(0);
+            if (valid_cmdlin == 0) { //there were no errors when parsing 
+                //Checks if an internal command, if it is then it is run, else a normal command is run
+                int internal_code = handle_internal(list_commands, list_env);
+                if(internal_code == 1) {
+                    char **new_envp = make_env_array(list_env); 
+                    run_command(cmdline.num, list_commands, new_envp);
+                    int list_len = getListLength(list_env); 
+                    free_env_array(new_envp, list_len);  
+                } else if (internal_code == 6) { //TODO: is this alright?
+                    freeing_on_exit(list_commands, list_env, cmdline);
+                    exit(0);
+                }
             }
 
             free_commandline_struct(cmdline);   
@@ -129,8 +129,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
             printf("%s", get_env_value(list_env, "PS1")); 
             fflush(stdout);
         }
-
-    //}
+    }
 }
 
 //void run_file_input();
