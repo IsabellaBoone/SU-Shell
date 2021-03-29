@@ -255,6 +255,7 @@ internal_t internal_cmds[] = {
  * @author Hannah Moats
  * 
  * @param subcommand A parsed command from the commandline
+ * @param list_env list_head List of environment variables
  * @return int If an error occured, output is -1 else output is 0
  */
 int handle_internal(struct list_head *commands, struct list_head *list_env) {
