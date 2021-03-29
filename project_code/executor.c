@@ -129,6 +129,7 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
   struct list_head *curr;  
 
   // If we have more than one subcommand
+  /*
   if(subcommand_count>=2){
     int i=0; // Keep track of what subcommand we are on
     int prev_output=0; // We need this to hold the child output for our loop
@@ -179,13 +180,14 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
       free(command); 
     }
   }else{ // Else, if we only have one command
-    for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
-      entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
-      char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char));
+  */
+    curr = list_commands->next; 
+    entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
+    char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char));
 
-      strcat(command, entry->exec_args[0]); // command becomes: /bin/<command> 
-      execute(command, entry->exec_args, entry, env); // Execute command
-      free(command); 
-    }
-  }
+    strcat(command, entry->exec_args[0]); // command becomes: /bin/<command> 
+    execute(command, entry->exec_args, entry, env); // Execute command
+    free(command); 
+
+  //}
 }

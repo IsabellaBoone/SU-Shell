@@ -38,7 +38,7 @@ int set_env(struct list_head *list, char *name, char *value) {
     // If the environment name matches the name we are searching for 
     if (strcmp(env->name, name) == 0) {
       // Update contents
-      int len = strlen(name) + strlen(value) + 1 + 1; // Length of strings and null terms 
+      int len = strlen(name) + strlen(value) + 1; // Length of strings and null terms 
       free(env->contents); // Free old contents
       env->contents = calloc(len, sizeof(char)); // Allocate to fit new contents
       strcat(env->contents, name); // Copy new name

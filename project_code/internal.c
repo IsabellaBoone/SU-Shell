@@ -136,7 +136,7 @@ static int handle_getenv(struct subcommand *subcommand, struct list_head *list_e
       return -1; 
     }
 
-    //printf("list: %s\n", env_list); 
+    printf("%s\n", env_list); 
     //printf("internal: %s\n", env); 
   } else { //error: there ere not enough arguments or too many 
     fprintf(stderr, ERROR_GETENV_ARG);
