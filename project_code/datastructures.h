@@ -62,11 +62,11 @@ typedef struct Commandline {
 /**
  * @brief subcommand - a sub command from the full commandline (sub commands are split at the pipes)
  * 
- * exec_args A parsed subcommand ending with NULL
- * input The input of the command (stdin, file name)
- * output The output of the command (stdout, file name)
- * type The type of redirect
- * list The list which subcommand points to
+ * @param exec_args A parsed subcommand ending with NULL
+ * @param input The input of the command (stdin, file name)
+ * @param output The output of the command (stdout, file name)
+ * @param type The type of redirect
+ * @param list The list which subcommand points to
  */
 struct subcommand {
     char **exec_args; 

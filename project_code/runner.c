@@ -56,7 +56,7 @@ void run_rc_file(struct list_head *list_commands, struct list_head *list_env, st
 
     if(sushhome_exists(list_env)){
         struct stat sb;
-        char* sushhome = get_env2(list_env, "SUSHHOME");
+        char* sushhome = get_env_value(list_env, "SUSHHOME");
         int stat_status = stat(sushhome, &sb);
         if ((sb.st_mode & S_IRUSR) || (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
             FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
@@ -98,7 +98,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
         fgets(input, INPUT_LENGTH, stdin);
         if(input[0] != '\n'){
             //printf("%s", get_env(list_env, "PS1")); 
-            printf("%s", get_env2(list_env, "PS1")); 
+            printf("%s", get_env_value(list_env, "PS1")); 
             fflush(stdout);
             int len = strlen(input); 
             input[len-1] = '\0';
@@ -126,7 +126,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
             clear_list_command(list_commands); 
 
             //printf("%s", get_env(list_env, "PS1")); 
-            printf("%s", get_env2(list_env, "PS1")); 
+            printf("%s", get_env_value(list_env, "PS1")); 
             fflush(stdout);
         }
 
