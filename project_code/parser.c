@@ -511,10 +511,15 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
         if (currentState != QUOTE) {
           currentState = QUOTE;
           j++;
-          while (commandline->subcommand[i][j] != QUOTATIONMARK)
+          while (commandline->subcommand[i][j] != QUOTATIONMARK && j < strlen(commandline->subcommand[i]))
           {
             strncat(temp, &commandline->subcommand[i][j], 1);
             j++;
+          }
+          if (j >= strlen(commandline->subcommand[i])) {
+            free_malloced_parser_values(list_args, temp); 
+            fprintf(stderr, ERROR_INVALID_CMDLINE); 
+            return -1; 
           }
 
           add_arg_to_list(temp, NORMAL, arg, list_args);
