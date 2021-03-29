@@ -5,34 +5,34 @@
 #include "runner.h"
 
 void clear_list_command(struct list_head *list) {
-    struct subcommand *entry; 
-    while (!list_empty(list)) {
-        entry = list_entry(list->next, struct subcommand, list);
-        //free 2D array
-        int i = 0;
-        while (entry->exec_args[i] != NULL) {
-            free(entry->exec_args[i]); //free array elements
-            i++; 
-        }
-        free(entry->exec_args); //free array
-        free(entry->input); 
-        free(entry->output); 
-        list_del(&entry->list); 
-        free(entry); 
+  struct subcommand *entry; 
+  while (!list_empty(list)) {
+    entry = list_entry(list->next, struct subcommand, list);
+    //free 2D array
+    int i = 0;
+    while (entry->exec_args[i] != NULL) {
+      free(entry->exec_args[i]); //free array elements
+      i++; 
     }
+    free(entry->exec_args); //free array
+    free(entry->input); 
+    free(entry->output); 
+    list_del(&entry->list); 
+    free(entry); 
+  }
 }
 
 void free_commandline_struct(commandline cmdline) {
-    for(int i=0;i<cmdline.num; i++){
-        free(cmdline.subcommand[i]);
-    }
-    free(cmdline.subcommand);
+  for(int i=0;i<cmdline.num; i++){
+    free(cmdline.subcommand[i]);
+  }
+  free(cmdline.subcommand);
 }
 
 void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env, commandline cmdline) {
-    clear_list_command(list_commands); 
-    clear_list_env(list_env);
-    free_commandline_struct(cmdline);  
+  clear_list_command(list_commands); 
+  clear_list_env(list_env);
+  free_commandline_struct(cmdline);  
 }
 
 /**
@@ -41,95 +41,99 @@ void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env
  * If set, return 1, else return 0.
 */
 int sushhome_exists(struct list_head *list_env){
-    char* sushhome = get_env(list_env, "SUSHHOME");
+  char* sushhome = get_env(list_env, "SUSHHOME");
 
-    if(sushhome != NULL){
-        return 1;
-    }
-
-    return 0;
+  if(sushhome != NULL){
+    return 1;
+  }
+  return 0;
 }
 
+/**
+ * @brief Takes a command line and runs the command.
+ * 
+ * @param list_commands The list of comamnds, which is a list of subcommands
+ * @param list_env The list_env that holds all the environment variables 
+ * @param list_args The list of argumentst that are parsed from the command line
+ * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
+ * @param input The input buffer for fgets
+ */
+void run_parser_executor_handler(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
+
+  int len = strlen(input); 
+  input[len-1] = '\0';
+
+  cmdline.num = find_num_subcommands(input, len);
+            
+  //creates an array of pointers, in proportion to the number of subcommands
+  cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
+  copy_subcommands(input, cmdline.num, cmdline.subcommand);
+  int valid_cmdline = parse_commandline(list_args, &cmdline, list_commands);
+
+  if (valid_cmdline == 0) { //there were no errors when parsing 
+    //Checks if an internal command, if it is then it is run, else a normal command is run
+    int internal_code = handle_internal(list_commands, list_env);
+    if(internal_code == 1) {
+      char **new_envp = make_env_array(list_env); 
+      run_command(cmdline.num, list_commands, new_envp);
+      int list_len = getListLength(list_env); 
+      free_env_array(new_envp, list_len);  
+    } else if (internal_code == 6) { //TODO: is this alright?
+      freeing_on_exit(list_commands, list_env, cmdline);
+      exit(0);
+    }
+  }
+
+  free_commandline_struct(cmdline);   
+  clear_list_command(list_commands); 
+}
+
+/**
+ * @brief Takes a command line from the rc file and runs it. 
+ * 
+ * @param list_commands The list of comamnds, which is a list of subcommands
+ * @param list_env The list_env that holds all the environment variables 
+ * @param list_args The list of argumentst that are parsed from the command line
+ * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
+ * @param input The input buffer for fgets
+ */
 void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
 
-    // set_env(list_env, "SUSHHOME", "input.txt");
-
-    if(sushhome_exists(list_env)){
-        struct stat sb;
-        char* sushhome = get_env_value(list_env, "SUSHHOME");
-        int stat_status = stat(sushhome, &sb);
-        if ((sb.st_mode & S_IRUSR) || (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
-            FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
-            //read from file and execute commands 
-            while (fgets(input, INPUT_LENGTH-1, file)!=NULL) {
-                
-                int len = strlen(input); 
-                input[len-1] = '\0';
-                cmdline.num = find_num_subcommands(input, len);
-                //creates an array of pointers, in proportion to the number of subcommands
-                cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
-                copy_subcommands(input, cmdline.num, cmdline.subcommand);
-                parse_commandline(list_args, &cmdline, list_commands); 
-
-                int internal_code = handle_internal(list_commands, list_env);
-                if(internal_code == 1) {
-                    char **new_envp = make_env_array(list_env); 
-                    run_command(cmdline.num, list_commands, new_envp);
-                    int list_len = getListLength(list_env); 
-                    free_env_array(new_envp, list_len);  
-                } else if (internal_code == 6) { //TODO: is this alright?
-                    freeing_on_exit(list_commands, list_env, cmdline);
-                    exit(0);
-                }
-                
-                free_commandline_struct(cmdline);   
-                clear_list_command(list_commands);  
-            } 
-            int flcose_status = fclose(file); 
-            //should probably check the status 
-        }
+if(sushhome_exists(list_env)){
+  struct stat sb;
+  char* sushhome = get_env_value(list_env, "SUSHHOME");
+  int stat_status = stat(sushhome, &sb);
+  if ((sb.st_mode & S_IRUSR) && (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
+    FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
+    if (file == NULL) {
+      return; 
     }
+    //read from file and execute commands 
+    while (fgets(input, INPUT_LENGTH-1, file)!= NULL) {
+      run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input); 
+    } 
+    int flcose_status = fclose(file); 
+  }
+}
 }
 
+/**
+ * @brief Takes a command line from user input and runs it.
+ * 
+ * @param list_commands The list of comamnds, which is a list of subcommands
+ * @param list_env The list_env that holds all the environment variables 
+ * @param list_args The list of argumentst that are parsed from the command line
+ * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
+ * @param input The input buffer for fgets
+ */
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc) {
-    while(1) {
-        fgets(input, INPUT_LENGTH, stdin);
-        if(input[0] != '\n'){
-            //printf("%s", get_env(list_env, "PS1")); 
-            printf("%s", get_env_value(list_env, "PS1")); 
-            fflush(stdout);
-            int len = strlen(input); 
-            input[len-1] = '\0';
-
-            cmdline.num = find_num_subcommands(input, len);
-            
-            //creates an array of pointers, in proportion to the number of subcommands
-            cmdline.subcommand = malloc(cmdline.num *  sizeof(char *)); 
-            copy_subcommands(input, cmdline.num, cmdline.subcommand);
-            int valid_cmdlin = parse_commandline(list_args, &cmdline, list_commands);
-            
-            if (valid_cmdlin == 0) { //there were no errors when parsing 
-                //Checks if an internal command, if it is then it is run, else a normal command is run
-                int internal_code = handle_internal(list_commands, list_env);
-                if(internal_code == 1) {
-                    char **new_envp = make_env_array(list_env); 
-                    run_command(cmdline.num, list_commands, new_envp);
-                    int list_len = getListLength(list_env); 
-                    free_env_array(new_envp, list_len);  
-                } else if (internal_code == 6) { //TODO: is this alright?
-                    freeing_on_exit(list_commands, list_env, cmdline);
-                    exit(0);
-                }
-            }
-
-            free_commandline_struct(cmdline);   
-            clear_list_command(list_commands); 
-
-            //printf("%s", get_env(list_env, "PS1")); 
-            printf("%s", get_env_value(list_env, "PS1")); 
-            fflush(stdout);
-        }
+  while(fgets(input, INPUT_LENGTH, stdin) != NULL) {
+    if(input[0] != '\n'){
+      printf("%s", get_env_value(list_env, "PS1")); 
+      fflush(stdout);
+      run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input);
+      printf("%s", get_env_value(list_env, "PS1")); 
+      fflush(stdout);
     }
+  }
 }
-
-//void run_file_input();
