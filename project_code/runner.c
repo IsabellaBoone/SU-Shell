@@ -134,24 +134,57 @@ void run_parser_executor_handler(struct list_head *list_commands, struct list_he
  * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
  * @param input The input buffer for fgets
  */
-void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
+
+
+char *getsushrc(struct list_head *list_env )
+{
+  char *filename = calloc(1024, sizeof(char));
 
   if(sushhome_exists(list_env)){
     struct stat sb; //Keep track of information regarding the .sushrc file
     char* sushhome = get_env_value(list_env, "SUSHHOME"); //Get location to look for sushrc 
-    int stat_status = stat(sushhome, &sb);
+    strcpy(filename,sushhome);
+    strcat(filename, "/.sushrc");
+    
+
+    // printf("%s\n", sushhome);
+  }
+  else {
+    strcpy(filename,".sushrc");
+  }  
+
+  return filename;
+}
+
+void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
+  char *fname = NULL;
+  if(sushhome_exists(list_env)){
+    struct stat sb; //Keep track of information regarding the .sushrc file
+    
+    fname = getsushrc(list_env);
+    // printf("%s\n", fname);
+    int stat_status = stat(fname, &sb);
     if ((sb.st_mode & S_IRUSR) && (sb.st_mode & S_IXUSR)) { //if true file is valid, read from file
-      FILE *file = fopen(sushhome, "r");   //open .suhrc and read from it
+      FILE *file = fopen(fname, "r");   //open .suhrc and read from it
+      
       if (file == NULL) {
-        return; 
+        // printf("This file was null\n");
+        goto error;
       }
       //read from file and execute commands 
       while (fgets(input, INPUT_LENGTH-1, file)) {
+        // printf("contents: %s\n", input);
         run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input); 
       } 
       int flcose_status = fclose(file); 
     }
-  }
+  } 
+
+
+error:
+  if (fname != NULL)
+    free(fname);
+  return;  
 }
 
 void check_PS1(struct list_head *list_env) {
@@ -177,7 +210,7 @@ void run_user_input(struct list_head *list_commands, struct list_head *list_env,
 
   check_PS1(list_env); 
   while(fgets(input, INPUT_LENGTH, stdin)) {
-    if(input[0] != '\n'){
+    if(input[0] != '\n' && input[0]!=' '){
       run_parser_executor_handler(list_commands, list_env, list_args, cmdline, input);
     }
     check_PS1(list_env);
