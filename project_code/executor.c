@@ -23,6 +23,13 @@
 #include "executor.h"
 #include "error.h"
 
+#define ERROR_CHECK_MSG(error, value) ({   \
+if (value == -1) {                         \
+  fprintf(stderr, error, strerror(errno)); \
+  return -1;                               \
+  }                                        \
+})                                         \
+
 /**
  * @brief Handles the execution of the child process 
  * @author Hannah Moats 
@@ -30,7 +37,7 @@
  * @param args char* const The list of args sent to exec 
  * @param env char** array of environment variables
  */
-void handleChildInExecutor(char *command, char *const *args, char **env) {
+static void handleChildInExecutor(char *command, char *const *args, char **env) {
   pid_t pid2 = execvpe(command, args, env); // Execute command 
   fprintf(stderr, ERROR_EXEC_FAILED, strerror(errno)); // Should only be reaches when error happens with execvpe
   exit(-1); // Exit with error 
@@ -42,7 +49,7 @@ void handleChildInExecutor(char *command, char *const *args, char **env) {
  * @param pid The process id
  * @param option The option passed to waitpid 
  */
-void handleParentInExecutor(pid_t pid, int option) {
+static void handleParentInExecutor(pid_t pid, int option) {
   int status; 
   waitpid(pid, &status, option); // Wait for child to die
   // printf("Child exited: %d\n", status);
@@ -54,7 +61,7 @@ void handleParentInExecutor(pid_t pid, int option) {
  * @param subcmd The command who's input and output is being handled. 
  * @return int Returns -1 for error, 0 no error
  */
-int handle_input_output(struct subcommand *subcmd) {
+static int handle_input_output(struct subcommand *subcmd) {
   // If subcmd->output is anything other than stdout (default)
   if (strcmp(subcmd->output, "stdout") != 0) {
     const char *filename = subcmd->output; // Get filename
@@ -63,10 +70,11 @@ int handle_input_output(struct subcommand *subcmd) {
     // If type is truncate, open file with trucate flags
     if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) {
       fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
-
+      ERROR_CHECK_MSG(ERROR_EXEC_OUTFILE, fd);
     // If type is append, open file with append flags
     } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) {
       fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
+      ERROR_CHECK_MSG(ERROR_EXEC_APPEND, fd); 
     }
     close(STDOUT_FILENO); // Close STDOUT
     dup2(fd, STDOUT_FILENO); // Connect FD and STDOUT 
@@ -76,15 +84,14 @@ int handle_input_output(struct subcommand *subcmd) {
     const char *filename = subcmd->input; // Get filename
     FILE *file;
     file = fopen(filename, "r"); // File descriptor, open file read only
-    int fd = fileno(file);
-    if (fd == -1) {
-        fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno));  
-        return -1; 
-    } else {
-      close(STDIN_FILENO); // Close STDIN
-      dup2(fd, STDIN_FILENO); // Connect FD and STDIN
-      close(fd);
+    if (file == NULL) {
+      fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno)); 
+      return -1; 
     }
+    int fd = fileno(file); 
+    close(STDIN_FILENO); // Close STDIN
+    dup2(fd, STDIN_FILENO); // Connect FD and STDIN
+    close(fd);
   }
   return 0; 
 }
@@ -103,6 +110,7 @@ void execute(char *command, char *const *args, struct subcommand *subcmd, char *
    if ( handle_input_output(subcmd) != -1) {
       handleChildInExecutor(command, subcmd->exec_args, env);
     }
+    exit(1); 
   } else { // Parent process 
     handleParentInExecutor(pid, 0); 
   }
@@ -126,7 +134,6 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
     int prev_output=0; // We need this to hold the child output for our loop
     int pipes[2]; // Standard pipes
 
-    
     // Iterate through entire list until we reach the beginnign again. 
     for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
       entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
@@ -134,8 +141,8 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
       
       // command becomes: <command> 
       strcat(command, entry->exec_args[0]); 
-      // make pipes
 
+      // make pipes
       if(i<subcommand_count-1){
         int pipe_code = pipe(pipes);
 
@@ -146,7 +153,6 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
         }
       }
       
-    
       pid_t pid = fork(); 
 
       if (pid == 0) { // Child process 
@@ -158,16 +164,15 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
         }
 
         if ( handle_input_output(entry) != -1) {
-          handleChildInExecutor(command, entry->exec_args, env);
+          handleChildInExecutor(command, entry->exec_args, env); 
         }
-                
+        exit(1); 
       } else { // Parent process
         prev_output=pipes[0]; //get output from the child, and ensure that we can save it for next child
         
         close(pipes[1]); 
         
         handleParentInExecutor(pid, 0);
-        
       }
 
       i++;
