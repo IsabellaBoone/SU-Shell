@@ -94,9 +94,13 @@ int sushhome_exists(struct list_head *list_env){
  */
 void run_parser_executor_handler(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
 
-  int len = strlen(input); 
-  input[len-1] = '\0';
 
+  int len = strlen(input); 
+  
+  if(input[len-1]=='\n'){
+    input[len-1] = '\0';
+  }
+  
   cmdline.num = find_num_subcommands(input, len);
             
   //creates an array of pointers, in proportion to the number of subcommands
@@ -135,7 +139,6 @@ void run_parser_executor_handler(struct list_head *list_commands, struct list_he
  * @param input The input buffer for fgets
  */
 void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
-
   if(sushhome_exists(list_env)){
     struct stat sb; //Keep track of information regarding the .sushrc file
     char* sushhome = get_env_value(list_env, "SUSHHOME"); //Get location to look for sushrc 
