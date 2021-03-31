@@ -9,33 +9,72 @@
 #include "environ.h"
 #include "datastructures.h"
 
+/**
+ * @brief Test that we can display a 2D array of environment variables
+ * 
+ * @param envp 
+ */
 void test_display_env_array(char ** envp) {
     display_env_array(envp); 
 }
 
+/**
+ * @brief Test that we can make a list of environment variables
+ * 
+ * @param list 
+ * @param envp 
+ */
 void test_make_env_list(struct list_head *list, char **envp) {
     make_env_list(list, envp); 
 }
 
+/**
+ * @brief Test that we can display the entire list of environment variables
+ * 
+ * @param envp_list 
+ */
 void test_display_env_list(struct list_head *envp_list) {
     display_env_list(envp_list); 
 }
 
+/**
+ * @brief Test that we can input a list of environment variables and
+ * make the list into an array of variables
+ * 
+ * @param list 
+ * @return char** 
+ */
 char ** test_make_env_array(struct list_head *list) {
     char **envp = make_env_array(list); 
     display_env_array(envp); 
     return envp; 
 }
 
+/**
+ * @brief Test that we can clear our array of environment variables
+ * 
+ * @param envp 
+ * @param list 
+ */
 void test_free_env_array(char **envp, struct list_head *list) {
     int len = getListLength(list); ;
     free_env_array(envp, len); 
 }
 
+/**
+ * @brief Test that we can clear our list of environment variables out
+ * 
+ * @param list 
+ */
 void test_free_env_list(struct list_head *list) {
     clear_list_env(list); 
 } 
 
+/**
+ * @brief Test to ensure we can get an internal environment variable from our list
+ * 
+ * @param list 
+ */
 void test_get_env(struct list_head *list) {
     char *env; 
     char *og; 
@@ -47,6 +86,11 @@ void test_get_env(struct list_head *list) {
     printf("get_env NAME: %s\n", env);  
 }
 
+/**
+ * @brief Test to ensure we can add a new environment variable and value to the internal environment list
+ * 
+ * @param list 
+ */
 void test_set_env(struct list_head *list) {
     char *env; 
     set_env(list, "NAME", "batman"); 
@@ -54,6 +98,10 @@ void test_set_env(struct list_head *list) {
     
 }
 
+/**
+ * @brief Temp struct that reflects our subcommand struct
+ * 
+ */
 struct subcommand_new {
     char **execs; 
     char *input; 
@@ -62,6 +110,11 @@ struct subcommand_new {
     struct list_head list; 
 }; 
 
+/**
+ * @brief Test to see if we can successfully print the list of subcommands
+ * 
+ * @param list_commands 
+ */
 void test_print_list(struct list_head *list_commands) {
    struct list_head *curr; 
    curr = list_commands->next; 
@@ -82,9 +135,8 @@ void test_print_list(struct list_head *list_commands) {
 
 }
 
-
 /*
-
+//Commented out to compile sush without main yelling
 int main (int argc, char **argv, char **envp) {
 
     

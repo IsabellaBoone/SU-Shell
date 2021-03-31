@@ -130,16 +130,12 @@ static void run_parser_executor_handler(struct list_head *list_commands, struct 
 }
 
 /**
- * @brief Takes a command line from the rc file and runs it. 
+ * @brief Retrieves the sushrc files path from the SUSHHOME directory if it exists.
  * 
- * @param list_commands The list of comamnds, which is a list of subcommands
  * @param list_env The list_env that holds all the environment variables 
- * @param list_args The list of argumentst that are parsed from the command line
- * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
- * @param input The input buffer for fgets
+ *
+ * @return char* filename - The complete path for .sushrc (including the .sushrc in the path)
  */
-
-
 static char *getsushrc(struct list_head *list_env )
 {
   char *filename = calloc(1024, sizeof(char));
@@ -156,6 +152,15 @@ static char *getsushrc(struct list_head *list_env )
   return filename;
 }
 
+/**
+ * @brief Checks to see if SUSHHOME environment variable was set, if so executes the .sushrc file
+ * 
+ * @param list_commands The list of comamnds, which is a list of subcommands
+ * @param list_env The list_env that holds all the environment variables 
+ * @param list_args The list of argumentst that are parsed from the command line
+ * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
+ * @param input The input buffer for fgets
+ */
 void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
   char *fname = NULL;
   if(sushhome_exists(list_env)){
@@ -187,6 +192,11 @@ error:
   return;  
 }
 
+/**
+ * @brief Checks to see if the PS1 variable has been set by rc/envp, if not default to ">"
+ * 
+ * @param list_env - Internal environment list from main
+ */
 void check_PS1(struct list_head *list_env) {
   //checks if PS1 is set, if it is then there is no need to set the environment
   if (get_env(list_env, "PS1") != NULL) {

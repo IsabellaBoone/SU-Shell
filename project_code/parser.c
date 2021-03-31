@@ -25,6 +25,10 @@
 
 #define MAX_BUFFER 4096
 
+/**
+ * @brief Special characters that our parser must account fo with specific actions
+ * 
+ */
 #define SPACE ' '
 #define TAB '\t'
 #define NEWLINE '\n'
@@ -44,7 +48,7 @@
 }) 
 
 /**
- * @brief Current state on parser 
+ * @brief Current state off parser 
  */
 enum State
 {
@@ -250,18 +254,19 @@ static void get_input_output(struct list_head *arg, struct subcommand *subcomman
   struct list_head *curr = arg->next; 
   argument *entry; 
   int i = 0; 
+
   while (curr != arg && i < 20) {
-  i++; 
-	entry = list_entry(curr, argument, list); 
-	curr = curr->next; 
-	if (entry->token == REDIRECT_OUTPUT_TRUNCATE || entry->token == REDIRECT_OUTPUT_APPEND) {
-		delete_token(entry, subcommand); 
-    DELETE_FILE(entry, output, curr); 
-	} else if (entry->token == REDIRECT_INPUT) {
-		delete_token(entry, subcommand);
-    DELETE_FILE(entry, input, curr); 
-	} 
-}
+    i++; 
+    entry = list_entry(curr, argument, list); 
+    curr = curr->next; 
+    if (entry->token == REDIRECT_OUTPUT_TRUNCATE || entry->token == REDIRECT_OUTPUT_APPEND) {
+      delete_token(entry, subcommand); 
+      DELETE_FILE(entry, output, curr); 
+    } else if (entry->token == REDIRECT_INPUT) {
+      delete_token(entry, subcommand);
+      DELETE_FILE(entry, input, curr); 
+    } 
+  }
 }
 
 /**
@@ -285,11 +290,10 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
       i++; 
   }
   sub->exec_args[num_args-1] = NULL; 
-
 }
 
 /**
- * @brief Checks to see if the command is an internal command
+ * @brief Checks to see if the command from input is an internal command
  * 
  * @param arg1 The name of the command
  * @return int Returns 0 if the command is an internal command, else 1 if it is not
@@ -325,7 +329,6 @@ static void make_subcommand(struct list_head *list_commands, struct list_head *l
   }
   make_exec_args_array(list_args, sub); //fills in the struct field: exec_args ==> "ls", "-l", NULL
   list_add_tail(&sub->list, list_commands); 
-  
 }
 
 /**
@@ -394,7 +397,8 @@ static void free_malloced_parser_values(struct list_head *list_args, char *temp)
 }
 
 /**
- * @brief Creates a list of commands, or subcommand structs, where each 
+ * @brief Parses the character array from user input (stored in commandlline) and
+ * creates a list of commands, or subcommand structs, where each 
  * subcommand is parsed and marked with the appropiate input and output. 
  * 
  * @param list_args A list used to store the parsed arguments of a subcommand
@@ -494,19 +498,21 @@ int parse_commandline(struct list_head *list_args, commandline *commandline, str
         }
       }
     }
+
     //The req specify ending the list of arguements with a NULL for exec
-    
     arg = malloc(sizeof(argument));
     arg->contents = strdup("\0");
     arg->token = NORMAL;
     list_add_tail(&arg->list, list_args);
 
+    //Check for malformed commandline
     int error_check = check_validity_of_cmdline_redirects(list_args, commandline->num, i + 1, redirect_in_count, redirect_out_count); 
     if (error_check == -1) {
       clear_list_argument(list_args); 
       free(temp); 
       return -1; 
     }
+    
     //Makes a subcomamnd, then clears the list_args so that more args can be scanned
     //at this point list_args == "ls" "-l" "\0" 
     make_subcommand(list_commands, list_args); 

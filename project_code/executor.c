@@ -23,6 +23,7 @@
 #include "executor.h"
 #include "error.h"
 
+//Defined function for error printing
 #define ERROR_CHECK_MSG(error, subcmd_file) ({ \
 if (access(subcmd_file, F_OK) != 0) {          \
   fprintf(stderr, error, strerror(errno));     \
@@ -123,7 +124,6 @@ static void execute(char *command, char *const *args, struct subcommand *subcmd,
   } else { // Parent process 
     handleParentInExecutor(pid, 0); 
   }
-
 }
 
 
@@ -137,14 +137,13 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
   struct subcommand *entry; 
   struct list_head *curr;  
 
-
-  // If we have more than one subcommand
+  // If we have more than one subcommand, then we must use pipes
   if(subcommand_count>=2){
     int i=0; // Keep track of what subcommand we are on
-    int prev_output=0; // We need this to hold the child output for our loop
+    int prev_output=0; // Temp fd for saving previous pipe output
     int pipes[2]; // Standard pipes
 
-    // Iterate through entire list until we reach the beginnign again. 
+    // Iterate through entire list until we reach the beggining again. 
     for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
       entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
       if (check_validity_of_files(entry) == -1) {
@@ -177,13 +176,11 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
         exit(1); 
       } else { // Parent process
         prev_output=pipes[0]; //get output from the child, and ensure that we can save it for next child
-        
         close(pipes[1]); 
-        
         handleParentInExecutor(pid, 0);
       }
 
-      i++;
+      i++; //increment i so that we know which command we are on
     }
   } else{  // Else, if we only have one command 
     entry = list_entry(list_commands->next, struct subcommand, list); // Update entry to look at current subcommand

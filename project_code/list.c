@@ -12,6 +12,12 @@
 
 #include "list.h"
 
+/**
+ * @brief Add a new node to the front of an existing list
+ * 
+ * @param new - new node
+ * @param head - existing list
+ */
 void list_add(struct list_head *new, struct list_head *head){
     struct list_head *next = head->next;
 
@@ -22,6 +28,12 @@ void list_add(struct list_head *new, struct list_head *head){
     head->next = new;
 }
 
+/**
+ * @brief Add a new node to the end of an existing list
+ * 
+ * @param new - new node
+ * @param head - existing list
+ */
 void list_add_tail(struct list_head *new, struct list_head *head){
     struct list_head *next = head->next;
     struct list_head *prev = head->prev;
@@ -32,6 +44,11 @@ void list_add_tail(struct list_head *new, struct list_head *head){
     head->prev = new;
 }
 
+/**
+ * @brief Delete a give node from its list
+ * 
+ * @param entry - Node to delete
+ */
 void list_del(struct list_head *entry) { 
     struct list_head *next = entry->next;
     struct list_head *prev = entry->prev;
@@ -45,11 +62,23 @@ void list_del(struct list_head *entry) {
 
 }
 
+/**
+ * @brief Checks if a given list is empty
+ * 
+ * @param head - Beggining node to check with traversal
+ * @return int - 0 for not empty, 1 for empty
+ */
 int list_empty(struct list_head *head){
     int isEmpty = (head->next == head && head->next == head) ? 1 : 0;
     return isEmpty;
 }
 
+/**
+ * @brief "Splices" two existing list into one list
+ * 
+ * @param list 
+ * @param head 
+ */
 void list_splice(struct list_head *list, struct list_head *head){
     struct list_head *A = list->next;
     struct list_head *B = list->prev;
