@@ -134,7 +134,7 @@ void copy_subcommands(char input[], int num, char **subcommand)
  * 
  * @param list struct list_head to clear
  */
-void clear_list_argument(struct list_head *list)
+static void clear_list_argument(struct list_head *list)
 {
   argument *entry; //Current entry during traversal
 
@@ -150,32 +150,12 @@ void clear_list_argument(struct list_head *list)
 }
 
 /**
- * @brief Navigate through list_args and print contents to console. 
- * @author John Gable 
- * 
- * @param list struct list_head to print
- */
-void display_list(struct list_head *list)
-{
-  struct list_head *start = list->next; // Start at the first node after the head
-  struct list_head *curr; // Tracks current node during traversal
-  argument *entry; // Current nodes struct with contents
-
-  // Iterate through list until we reach the beginning node again. 
-  for (curr = list->next; curr->next != start; curr = curr->next)
-  {
-    entry = list_entry(curr, argument, list); // Update entry 
-    printf("(%s), (%d)\n", entry->contents, entry->token); // Print
-  }
-}
-
-/**
  * @brief Check whether or not a char is considered whitespace.
  * 
  * @param c char to check
  * @return int 1 if it is considered whitespace, 0 if it is not. 
  */
-int is_whitespace(char c){
+static int is_whitespace(char c){
   if(c == SPACE || c == TAB){
     return 1;
   }
@@ -188,7 +168,7 @@ int is_whitespace(char c){
  * @param c char to check. 
  * @return int 1 if it is considered a quote, 0 if it is not. 
  */
-int is_quote(char c){
+static int is_quote(char c){
   if(c == QUOTATIONMARK){
     return 1;
   }
@@ -201,7 +181,7 @@ int is_quote(char c){
  * @param c char to check.
  * @return int 1 if it is considered a redirect symbol, 0 if it is not. 
  */
-int is_redir(char c){
+static int is_redir(char c){
   if(c == REDIR_IN || c == REDIR_OUT ){
     return 1;
   }
@@ -214,7 +194,7 @@ int is_redir(char c){
  * @param c char to check
  * @return int 1 if it is considered character, 0 if it is not. 
  */
-int is_character(char c){
+static int is_character(char c){
   if(!is_redir(c) && !is_whitespace(c) && !is_quote(c)){
     return 1;
   }
@@ -228,7 +208,7 @@ int is_character(char c){
  * @param c char to check. 
  * @return int return 1: whitespace, 2: character, 3: quote, 5:redir
  */
-int check_character_state(char c){
+static int check_character_state(char c){
   if(is_character(c)){
     return CHARACTER;
   }else if(is_whitespace(c)){
@@ -246,7 +226,7 @@ int check_character_state(char c){
  * @param entry The current entry from the argument list. 
  * @param subcommand The subcommand that is being altered.  
  */
-void delete_token(argument *entry, struct subcommand *subcommand) {
+static void delete_token(argument *entry, struct subcommand *subcommand) {
   subcommand->type = entry->token; 
   free(entry->contents); 
 	list_del(&entry->list); 
@@ -314,7 +294,7 @@ static void make_exec_args_array(struct list_head *list_args, struct subcommand 
  * @param arg1 The name of the command
  * @return int Returns 0 if the command is an internal command, else 1 if it is not
  */
-int check_internal_command(struct list_head *list_args) {
+static int check_internal_command(struct list_head *list_args) {
   char *internal_cmds[] = {"setenv", "getenv", "unsetenv", "cd", "pwd", "exit"};
   argument *entry = list_entry(list_args->next, argument, list); 
   int i; 
@@ -348,8 +328,16 @@ static void make_subcommand(struct list_head *list_commands, struct list_head *l
   
 }
 
-
-void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
+/**
+ * @brief Adds a parsed arg to the list of args. The list of args is used to make the 
+ * subcommand struct. Also used to mark the token value. 
+ * 
+ * @param temp The item being added
+ * @param token The type of arg it is
+ * @param arg The struct which stores the argument
+ * @param list_args The list which contains the args
+ */
+static void add_arg_to_list(char *temp, int token, argument *arg, struct list_head *list_args){
   arg = malloc(sizeof(argument)); 
   arg->contents = strdup(temp); // Copy temp to contents
   arg->token = token; // Set token to normal
@@ -399,7 +387,7 @@ static int check_validity_of_cmdline_redirects(struct list_head *list_args, int 
  * @param list_args The list of parsed arguments. 
  * @param temp The temporary buffer. 
  */
-void free_malloced_parser_values(struct list_head *list_args, char *temp) {
+static void free_malloced_parser_values(struct list_head *list_args, char *temp) {
   clear_list_argument(list_args); 
   free(temp);
   return; 

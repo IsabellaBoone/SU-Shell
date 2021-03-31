@@ -93,11 +93,13 @@ static int handle_input_output(struct subcommand *subcmd) {
   return 0; 
 }
 
-
-int check_validity_of_files(struct subcommand *subcmd, char *exec_file) {
-  strcpy(exec_file, "/bin/"); 
-  strcat(exec_file, subcmd->exec_args[0]); 
-  ERROR_CHECK_MSG(ERROR_EXEC_FAILED, exec_file); 
+/**
+ * @brief Checks if the input file is in created. 
+ * 
+ * @param subcmd The subcommand that is being evaluated. 
+ * @return int Returns -1 if the file is not vlaid, else returns 0. 
+ */
+static int check_validity_of_files(struct subcommand *subcmd) { 
   char *input = subcmd->input; 
   if (strcmp(input, "stdin") != 0) {
     ERROR_CHECK_MSG(ERROR_EXEC_INFILE, subcmd->input);
@@ -111,7 +113,7 @@ int check_validity_of_files(struct subcommand *subcmd, char *exec_file) {
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
  */
-void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) { 
+static void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) { 
   pid_t pid = fork(); 
 
   if (pid == 0) { // Child process 
@@ -135,6 +137,7 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
   struct subcommand *entry; 
   struct list_head *curr;  
 
+
   // If we have more than one subcommand
   if(subcommand_count>=2){
     int i=0; // Keep track of what subcommand we are on
@@ -144,13 +147,10 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
     // Iterate through entire list until we reach the beginnign again. 
     for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
       entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
-      char *exec_file = malloc((6 + strlen(entry->exec_args[0])) * sizeof(char));
-      if (check_validity_of_files(entry, exec_file) == -1) {
-        free(exec_file); 
+      if (check_validity_of_files(entry) == -1) {
         return; 
       }
-      free(exec_file);
-      // make pipes
+      //make pipes
       if(i<subcommand_count-1){
         int pipe_code = pipe(pipes);
 
@@ -185,15 +185,11 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
 
       i++;
     }
-  } else{  // Else, if we only have one command
+  } else{  // Else, if we only have one command 
     entry = list_entry(list_commands->next, struct subcommand, list); // Update entry to look at current subcommand
-    //Making /bin/<command>
-    char *exec_file = malloc((6 + strlen(entry->exec_args[0])) * sizeof(char));
-    if (check_validity_of_files(entry, exec_file) == -1) {
-      free(exec_file); 
+    if (check_validity_of_files(entry) == -1) {
       return; 
     }
-    free(exec_file);
     execute(entry->exec_args[0], entry->exec_args, entry, env); // Execute command
   }
 }

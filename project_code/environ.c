@@ -17,13 +17,21 @@
 
 #define BUFFER_SIZE 4096 // Max size of a char*
 
-void set_env_update_contents(struct environment *env, char *name, char *value, struct list_head *list) {
-  int len = strlen(name) + strlen(value); // Length of strings + null terms
-  env->contents = malloc(1 + 1 + len * sizeof(char));  // Allocate to fit new contents
-  strcpy(env->contents, name); // Copy new name 
-  strcat(env->contents, "=");  // Copy equals sign
-  strcat(env->contents, value);  // Copy value
-  list_add_tail(&env->list, list); // Add environment to tail
+/**
+ * @brief Used by set_env to update the contents in the environment struct. 
+ * 
+ * @param env The environment struct that is updated. 
+ * @param name The name of the environment variable being updated
+ * @param value The value that is assigned to the name variable 
+ * @param list The list of environment variables
+ */
+static void set_env_update_contents(struct environment *env, char *name, char *value, struct list_head *list) {
+  int len = strlen(name) + strlen(value) + 2; // Length of strings and null terms 
+  env->contents = calloc(len, sizeof(char)); // Allocate to fit new contents
+  strcat(env->contents, name); // Copy new name
+  strcat(env->contents, "="); // Copy equals sign
+  strcat(env->contents, value); // Copy value
+  return; 
 }
 
 /**
@@ -47,6 +55,7 @@ int set_env(struct list_head *list, char *name, char *value) {
     // If the environment name matches the name we are searching for 
     if (strcmp(env->name, name) == 0) {
       // Update contents
+      free(env->contents); // Free old contents
       set_env_update_contents(env, name, value, list); 
       return 0;  // Return 0 for success
     }
@@ -57,6 +66,9 @@ int set_env(struct list_head *list, char *name, char *value) {
   env = malloc(sizeof(struct environment)); // Allocate space for a new environment variable
   env->name = strdup(name); // Add name to environment variable
   set_env_update_contents(env, name, value, list); 
+  list_add_tail(&env->list, list); // Add environment to tail
+
+
   return 0; // Return 0 for success
 }
 
@@ -107,7 +119,7 @@ static char * get_env_variable_name(char const *contents) {
  * @param contents A string with the environment variable in in (NAME=...).
  * @return char* The value of the environment variable. 
  */
-static char * get_env_variable_value(char *contents) { 
+static char * get_env_variable_value(char *contents) {
   while (*contents != '=' && *contents != '\0') {
     contents++; 
   }

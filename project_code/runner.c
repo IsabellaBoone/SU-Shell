@@ -22,7 +22,7 @@
  * 
  * @param list list_head to be cleared. 
  */
-void clear_list_command(struct list_head *list) {
+static void clear_list_command(struct list_head *list) {
   struct subcommand *entry; 
   while (!list_empty(list)) {
     entry = list_entry(list->next, struct subcommand, list);
@@ -47,7 +47,7 @@ void clear_list_command(struct list_head *list) {
  * 
  * @param cmdline commandline to be freed.
  */
-void free_commandline_struct(commandline cmdline) {
+static void free_commandline_struct(commandline cmdline) {
   // Free everything inside commandline
   for(int i=0;i<cmdline.num; i++){
     free(cmdline.subcommand[i]);
@@ -62,7 +62,7 @@ void free_commandline_struct(commandline cmdline) {
  * @param list_env list_head list of environment variables to be cleared. 
  * @param cmdline commandline to be cleared. 
  */
-void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env, commandline cmdline) {
+static void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env, commandline cmdline) {
   clear_list_command(list_commands); // Clear command
   clear_list_env(list_env); // Clear environments
   free_commandline_struct(cmdline); // Free commandline
@@ -75,7 +75,7 @@ void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env
  * @param list_env list_head to get SUSHHOME environment variable from. 
  * @return int if set, 1, else, 0. 
  */
-int sushhome_exists(struct list_head *list_env){
+static int sushhome_exists(struct list_head *list_env){
   char* sushhome = get_env(list_env, "SUSHHOME"); // Get environment variable
   if(sushhome != NULL){
     return 1; 
@@ -92,7 +92,7 @@ int sushhome_exists(struct list_head *list_env){
  * @param cmdline Struct which holds, unparsed subcommands, and the number of subcommands.
  * @param input The input buffer for fgets
  */
-void run_parser_executor_handler(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
+static void run_parser_executor_handler(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input) {
 
 
   int len = strlen(input); 
@@ -140,7 +140,7 @@ void run_parser_executor_handler(struct list_head *list_commands, struct list_he
  */
 
 
-char *getsushrc(struct list_head *list_env )
+static char *getsushrc(struct list_head *list_env )
 {
   char *filename = calloc(1024, sizeof(char));
 

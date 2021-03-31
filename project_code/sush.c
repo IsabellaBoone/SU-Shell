@@ -30,7 +30,6 @@ int main(int argc, char **argv, char **envp) {
 
   char input[INPUT_LENGTH]; 
   make_env_list(&list_env, envp); //creates a linked list of environment variables
-  // set_env(&list_env, "SUSHHOME", "/home/isabella/cmpe320/Projects/shell-project-cmpe-320/project_code/newdir/.sushrc");
 
   run_rc_file(&list_commands, &list_env, &list_args,  cmdline, input);
 

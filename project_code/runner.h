@@ -9,10 +9,6 @@
 
 #define INPUT_LENGTH 4094 // Max input length for strings
 
-
-void clear_list_command(struct list_head *list); 
-void free_commandline_struct(commandline cmdline); 
-void freeing_on_exit(struct list_head *list_commands, struct list_head *list_env, commandline cmdline); 
 void run_rc_file(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input);
 void run_user_input(struct list_head *list_commands, struct list_head *list_env, struct list_head *list_args, commandline cmdline, char *input, int argc); 
 
