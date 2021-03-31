@@ -15,7 +15,7 @@
 #define ERROR_CD_ARG "Error - cd takes one argument\n"
 #define ERROR_CD_NOHOME "Error - cd no home directory\n"
 #define ERROR_PWD_ARG "Error - pwd takes no arguments\n"
-#define ERROR_EXIT_ARG "Rrror - exit takes no arguments\n"
+#define ERROR_EXIT_ARG "Error - exit takes no arguments\n"
 #define ERROR_GETENV_INVALID "Error - getenv unknown variable %s\n" // variable name
 #define ERROR_QUEUE_ARG  "Error - queue requires at least two arguments\n"
 #define ERROR_OUTPUT_ARG "Error - output takes one argument\n"

@@ -17,6 +17,15 @@
 
 #define BUFFER_SIZE 4096 // Max size of a char*
 
+void set_env_update_contents(struct environment *env, char *name, char *value, struct list_head *list) {
+  int len = strlen(name) + strlen(value); // Length of strings + null terms
+  env->contents = malloc(1 + 1 + len * sizeof(char));  // Allocate to fit new contents
+  strcpy(env->contents, name); // Copy new name 
+  strcat(env->contents, "=");  // Copy equals sign
+  strcat(env->contents, value);  // Copy value
+  list_add_tail(&env->list, list); // Add environment to tail
+}
+
 /**
  * @brief Set an environment variable.
  * 
@@ -38,12 +47,7 @@ int set_env(struct list_head *list, char *name, char *value) {
     // If the environment name matches the name we are searching for 
     if (strcmp(env->name, name) == 0) {
       // Update contents
-      int len = strlen(name) + strlen(value) + 1; // Length of strings and null terms 
-      free(env->contents); // Free old contents
-      env->contents = calloc(len, sizeof(char)); // Allocate to fit new contents
-      strcat(env->contents, name); // Copy new name
-      strcat(env->contents, "="); // Copy equals sign
-      strcat(env->contents, value); // Copy value
+      set_env_update_contents(env, name, value, list); 
       return 0;  // Return 0 for success
     }
   }
@@ -52,13 +56,7 @@ int set_env(struct list_head *list, char *name, char *value) {
 
   env = malloc(sizeof(struct environment)); // Allocate space for a new environment variable
   env->name = strdup(name); // Add name to environment variable
-  //TODO: make funtion 
-  int len = strlen(name) + strlen(value); // Length of strings + null terms
-  env->contents = malloc(len * sizeof(char));  // Allocate to fit new contents
-  strcpy(env->contents, name); // Copy new name 
-  strcat(env->contents, "=");  // Copy equals sign
-  strcat(env->contents, value);  // Copy value
-  list_add_tail(&env->list, list); // Add environment to tail
+  set_env_update_contents(env, name, value, list); 
   return 0; // Return 0 for success
 }
 
@@ -109,14 +107,12 @@ static char * get_env_variable_name(char const *contents) {
  * @param contents A string with the environment variable in in (NAME=...).
  * @return char* The value of the environment variable. 
  */
-static char * get_env_variable_value(char const *contents) {
-  int len = strlen(contents) + 1; // Length of string + null term
-  char new_contents[BUFFER_SIZE]; // String to hold new contents
-  strncpy(new_contents, contents, len);  // Copy contents to new contents
-  char *value; // New variable to hold value of environment variable 
-  value = strtok(new_contents, "="); // First strtok, should get name (NAME=)
-  value = strtok(NULL, "\0"); // Second strtok, should return everything after = and before \0
-  return value; // Return value
+static char * get_env_variable_value(char *contents) { 
+  while (*contents != '=' && *contents != '\0') {
+    contents++; 
+  }
+  contents++; 
+  return contents; // Return value
 }
 
 /**

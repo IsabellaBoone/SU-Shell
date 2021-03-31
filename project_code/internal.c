@@ -240,6 +240,11 @@ static int handle_pwd(struct subcommand *subcommand, struct list_head *list_env)
  * @return int Returns a code to be processed by sush to clear list_command and exit. 
  */
 static int handle_exit(struct subcommand *subcommand, struct list_head *list_env) {
+  int num_args = get_num_args(subcommand); 
+  if (num_args != 1) {
+    fprintf(stderr, ERROR_EXIT_ARG); 
+    return -1;
+  }
   return 6; 
 }
 
