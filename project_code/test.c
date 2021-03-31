@@ -68,7 +68,6 @@ void test_print_list(struct list_head *list_commands) {
    struct subcommand_new *sub = list_entry(curr, struct subcommand_new, list); 
    printf("%s\n", sub->execs[0]); 
    printf("%s\n", sub->execs[1]); 
-   //printf("%s\n", sub->execs[2]); 
 
     pid_t pid = fork(); 
 

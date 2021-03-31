@@ -255,7 +255,6 @@ char ** make_env_array(struct list_head *list) {
     int list_len = getListLength(list); // Get size of list
     int i = 0; // Used to know which environment variable we are on.
 
-    //TODO: Don't forget to free the memory that is stored in the 
     char **envp = calloc(list_len + 1, sizeof(char *)); 
     for (curr = list->next; curr != list; curr = curr->next) {
         entry = list_entry(curr, struct environment, list); // Update environment variable 

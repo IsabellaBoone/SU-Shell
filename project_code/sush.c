@@ -24,7 +24,7 @@
  */
 int main(int argc, char **argv, char **envp) {
   commandline cmdline;
-  LIST_HEAD(list_args); //TODO should probably put this in parser.c and have it visible only there 
+  LIST_HEAD(list_args); 
   LIST_HEAD(list_commands); // a list of subcommand structs, represents the comamndline
   LIST_HEAD(list_env); // List of environment variables
 

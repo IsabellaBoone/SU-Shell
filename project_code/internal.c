@@ -32,7 +32,7 @@ typedef struct internal {
  */
 static void check_status(int status, char *command) {
   if (status == -1) {
-    fprintf(stderr, ERROR_INVALID_CMD, command); //TODO: am I using the right error, the command isn't wrong, just an error in processing
+    fprintf(stderr, ERROR_INVALID_CMD, command); 
   }
 }
 
@@ -109,7 +109,6 @@ static int handle_setenv(struct subcommand *subcommand, struct list_head *list_e
   char *value = get_third_argument(subcommand); 
   set_env(list_env, name, value); 
   int status = setenv(name, value, 1); 
-  //printf("setenv stat: %d\n", status); 
   return 0; 
 }
 
@@ -137,7 +136,6 @@ static int handle_getenv(struct subcommand *subcommand, struct list_head *list_e
     }
 
     printf("%s\n", env_list); 
-    //printf("internal: %s\n", env); 
   } else { //error: there ere not enough arguments or too many 
     fprintf(stderr, ERROR_GETENV_ARG);
     return -1; 
@@ -182,7 +180,6 @@ static int handle_cd(struct subcommand *subcommand, struct list_head *list_env) 
     int status = chdir(home); 
 
     //check for error
-    //TODO: should this check actually be applied to the return of getenv?
     if (status == -1) {
       fprintf(stderr, ERROR_CD_NOHOME); 
       return -1; 
