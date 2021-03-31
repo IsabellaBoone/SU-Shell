@@ -248,6 +248,7 @@ int check_character_state(char c){
  */
 void delete_token(argument *entry, struct subcommand *subcommand) {
   subcommand->type = entry->token; 
+  free(entry->contents); 
 	list_del(&entry->list); 
 	free(entry); 
 }

@@ -70,9 +70,11 @@ static int handle_input_output(struct subcommand *subcmd) {
     // If type is truncate, open file with trucate flags
     if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) {
       fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
+       ERROR_CHECK_MSG(ERROR_EXEC_OUTFILE, subcmd->output);
     // If type is append, open file with append flags
     } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) {
       fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
+      ERROR_CHECK_MSG(ERROR_EXEC_APPEND, subcmd->output);
     }
     close(STDOUT_FILENO); // Close STDOUT
     dup2(fd, STDOUT_FILENO); // Connect FD and STDOUT 
@@ -92,16 +94,12 @@ static int handle_input_output(struct subcommand *subcmd) {
 }
 
 
-int check_validity_of_file(struct subcommand *subcmd) {
+int check_validity_of_files(struct subcommand *subcmd, char *exec_file) {
+  strcpy(exec_file, "/bin/"); 
+  strcat(exec_file, subcmd->exec_args[0]); 
+  ERROR_CHECK_MSG(ERROR_EXEC_FAILED, exec_file); 
   char *input = subcmd->input; 
-  char *output = subcmd->output; 
-  if (strcmp(output, "stdout") != 0) {
-    if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) { 
-      ERROR_CHECK_MSG(ERROR_EXEC_OUTFILE, subcmd->output);
-    } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) { 
-      ERROR_CHECK_MSG(ERROR_EXEC_APPEND, subcmd->output);  
-    }
-  } if (strcmp(input, "stdin") != 0) {
+  if (strcmp(input, "stdin") != 0) {
     ERROR_CHECK_MSG(ERROR_EXEC_INFILE, subcmd->input);
   }
   return 0; 
@@ -113,10 +111,7 @@ int check_validity_of_file(struct subcommand *subcmd) {
  * @param command The type of command that is being executed, Ex. /bin/ls
  * @param args The array of args that exec() takes in
  */
-void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) {
-  if (check_validity_of_file(subcmd) == -1) {
-    return; 
-  }
+void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) { 
   pid_t pid = fork(); 
 
   if (pid == 0) { // Child process 
@@ -149,11 +144,12 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
     // Iterate through entire list until we reach the beginnign again. 
     for (curr = list_commands->next; curr != list_commands; curr = curr->next) {
       entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
-      char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char)); // Allcoate space for command
-      
-      // command becomes: <command> 
-      strcat(command, entry->exec_args[0]); 
-
+      char *exec_file = malloc((6 + strlen(entry->exec_args[0])) * sizeof(char));
+      if (check_validity_of_files(entry, exec_file) == -1) {
+        free(exec_file); 
+        return; 
+      }
+      free(exec_file);
       // make pipes
       if(i<subcommand_count-1){
         int pipe_code = pipe(pipes);
@@ -176,7 +172,7 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
         }
 
         if ( handle_input_output(entry) != -1) {
-          handleChildInExecutor(command, entry->exec_args, env); 
+          handleChildInExecutor(entry->exec_args[0], entry->exec_args, env); 
         }
         exit(1); 
       } else { // Parent process
@@ -188,10 +184,16 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
       }
 
       i++;
-      free(command); 
     }
   } else{  // Else, if we only have one command
     entry = list_entry(list_commands->next, struct subcommand, list); // Update entry to look at current subcommand
+    //Making /bin/<command>
+    char *exec_file = malloc((6 + strlen(entry->exec_args[0])) * sizeof(char));
+    if (check_validity_of_files(entry, exec_file) == -1) {
+      free(exec_file); 
+      return; 
+    }
+    free(exec_file);
     execute(entry->exec_args[0], entry->exec_args, entry, env); // Execute command
   }
 }
