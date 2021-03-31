@@ -23,12 +23,12 @@
 #include "executor.h"
 #include "error.h"
 
-#define ERROR_CHECK_MSG(error, value) ({   \
-if (value == -1) {                         \
-  fprintf(stderr, error, strerror(errno)); \
-  return -1;                               \
-  }                                        \
-})                                         \
+#define ERROR_CHECK_MSG(error, subcmd_file) ({ \
+if (access(subcmd_file, F_OK) != 0) {          \
+  fprintf(stderr, error, strerror(errno));     \
+  return -1;                                   \
+  }                                            \
+})                                             \
 
 /**
  * @brief Handles the execution of the child process 
@@ -40,7 +40,7 @@ if (value == -1) {                         \
 static void handleChildInExecutor(char *command, char *const *args, char **env) {
   pid_t pid2 = execvpe(command, args, env); // Execute command 
   fprintf(stderr, ERROR_EXEC_FAILED, strerror(errno)); // Should only be reaches when error happens with execvpe
-  exit(-1); // Exit with error 
+  exit(1); // Exit with error 
 }
 
 /**
@@ -70,11 +70,9 @@ static int handle_input_output(struct subcommand *subcmd) {
     // If type is truncate, open file with trucate flags
     if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) {
       fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777); 
-      ERROR_CHECK_MSG(ERROR_EXEC_OUTFILE, fd);
     // If type is append, open file with append flags
     } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) {
       fd = open(filename, O_WRONLY | O_CREAT | O_APPEND, 0777); 
-      ERROR_CHECK_MSG(ERROR_EXEC_APPEND, fd); 
     }
     close(STDOUT_FILENO); // Close STDOUT
     dup2(fd, STDOUT_FILENO); // Connect FD and STDOUT 
@@ -84,14 +82,27 @@ static int handle_input_output(struct subcommand *subcmd) {
     const char *filename = subcmd->input; // Get filename
     FILE *file;
     file = fopen(filename, "r"); // File descriptor, open file read only
-    if (file == NULL) {
-      fprintf(stderr, ERROR_EXEC_INFILE, strerror(errno)); 
-      return -1; 
-    }
-    int fd = fileno(file); 
+    int fd = fileno(file);  
+
     close(STDIN_FILENO); // Close STDIN
     dup2(fd, STDIN_FILENO); // Connect FD and STDIN
     close(fd);
+  }
+  return 0; 
+}
+
+
+int check_validity_of_file(struct subcommand *subcmd) {
+  char *input = subcmd->input; 
+  char *output = subcmd->output; 
+  if (strcmp(output, "stdout") != 0) {
+    if (subcmd->type == REDIRECT_OUTPUT_TRUNCATE) { 
+      ERROR_CHECK_MSG(ERROR_EXEC_OUTFILE, subcmd->output);
+    } else if (subcmd->type == REDIRECT_OUTPUT_APPEND) { 
+      ERROR_CHECK_MSG(ERROR_EXEC_APPEND, subcmd->output);  
+    }
+  } if (strcmp(input, "stdin") != 0) {
+    ERROR_CHECK_MSG(ERROR_EXEC_INFILE, subcmd->input);
   }
   return 0; 
 }
@@ -103,14 +114,15 @@ static int handle_input_output(struct subcommand *subcmd) {
  * @param args The array of args that exec() takes in
  */
 void execute(char *command, char *const *args, struct subcommand *subcmd, char **env) {
+  if (check_validity_of_file(subcmd) == -1) {
+    return; 
+  }
   pid_t pid = fork(); 
 
   if (pid == 0) { // Child process 
-    // if there is output
-   if ( handle_input_output(subcmd) != -1) {
+      // if there is output
+      handle_input_output(subcmd);
       handleChildInExecutor(command, subcmd->exec_args, env);
-    }
-    exit(1); 
   } else { // Parent process 
     handleParentInExecutor(pid, 0); 
   }
@@ -178,14 +190,8 @@ void run_command(int subcommand_count, struct list_head *list_commands, char **e
       i++;
       free(command); 
     }
-  } else{ // Else, if we only have one command
-    curr = list_commands->next; 
-    entry = list_entry(curr, struct subcommand, list); // Update entry to look at current subcommand
-    char *command = calloc((1 + strlen(entry->exec_args[0])), sizeof(char));
-
-    strcat(command, entry->exec_args[0]); // command becomes: /bin/<command> 
-    execute(command, entry->exec_args, entry, env); // Execute command
-    free(command); 
-
+  } else{  // Else, if we only have one command
+    entry = list_entry(list_commands->next, struct subcommand, list); // Update entry to look at current subcommand
+    execute(entry->exec_args[0], entry->exec_args, entry, env); // Execute command
   }
 }

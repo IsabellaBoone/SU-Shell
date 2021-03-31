@@ -36,7 +36,9 @@
 #define DELETE_FILE(entry, path, curr) ({ \
   entry = list_entry(curr, argument, list); \
   curr = curr->next; \
-  subcommand->path = entry->contents; \
+  free(subcommand->path); \
+  subcommand->path = strdup(entry->contents); \
+  free(entry->contents); \
   list_del(&entry->list); \
   free(entry); \
 }) 
@@ -103,12 +105,21 @@ void copy_subcommands(char input[], int num, char **subcommand)
   if(input[0]!=NEWLINE){ 
     int i, len;
     char *cmd = strtok(input, "|"); // Take the command before the pipe 
-
-    len = strlen(cmd); // Get length of command 
+    
+    if (cmd != NULL) {
+      len = strlen(cmd); // Get length of command 
+    } else {
+      return; 
+    }
 
     for (i = 0; i < num; i++)
-    {
-      len = strlen(cmd);
+    { 
+      if (cmd != NULL) {
+        len = strlen(cmd); // Get length of command 
+      } else {
+        return; 
+      }
+
       subcommand[i] = malloc(len + 2); // ALlcoate space 
       copy_subcommand(subcommand, cmd, i); // Copy subcommand
 

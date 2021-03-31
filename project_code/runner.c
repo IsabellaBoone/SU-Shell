@@ -34,7 +34,7 @@ void clear_list_command(struct list_head *list) {
       i++; 
     }
     // Free entry and everything inside it
-    free(entry->exec_args); 
+    free(entry->exec_args);  
     free(entry->input); 
     free(entry->output); 
     list_del(&entry->list); 

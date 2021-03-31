@@ -33,6 +33,13 @@ enum Token
 };
 
 /**
+ * @brief Enum to describe the status of the job commands.  
+ */
+enum Job_Status {
+  COMPLETE, QUEUED, RUNNING
+}; 
+
+/**
  * @brief Struct to hold individual arguments in a subcommand. 
  * 
  * @param contents the input
@@ -75,6 +82,18 @@ struct subcommand {
     enum Token type; 
     struct list_head list; 
 }; 
+
+/**
+ * @brief The struct which holds all the information on the job command. 
+ */
+struct job_command {
+  char **exec_args; ///< The 2D array sent to args
+  char *output_file; ///< the output file where the command outputs 
+  enum Job_Status status; ///< the current status of the job
+  int position; ///< the position of the job in the queue
+  int process_id; ///< the process ID that the job is running on
+  struct list_head queue; ///< the queue that the job belongs to
+};
 
 /**
  * @brief Find the number of subcommands in the input string and returns that value. 
