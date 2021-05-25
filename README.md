@@ -1,13 +1,13 @@
 # Shell Project
 - Completed by Isabella Boone, John Gable, Hannah Moats for Operating Systems (CMPE320) in Spring 2021
 ## Input/Output redirection 
-- Try `ls -la > ls.txt` to demostrate input redirection
+- Try `ls -l > output` to demonstrate redirection to output file
 
 ## Piping 
 - Try `ls -l | wc -l` 
 
 ## .bashrc Support
-- Our version is called a `.sushrc`, and it resides in `/project_code/`
+- Our version is called `.sushrc`, and it resides in `/project_code/`
 
 ## Environment Variables 
 - `getenv` to get all environment variables
